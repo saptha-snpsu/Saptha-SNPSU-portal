@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Placements — SAPTHA</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
+<script src="script.js"></script>
+<script>
+const u = requireAuth();
+renderHeader("placements.html");
+const selectedBatch = getEffectiveBatch();
+document.addEventListener("DOMContentLoaded", ()=>{
+    const heading = document.querySelector("section h3");
+    const subtitle = document.querySelector("section .lead");
+    if(heading) heading.textContent = `Placements — Batch ${selectedBatch}`;
+    if(subtitle) subtitle.textContent = `Current drives & upcoming opportunities for ${selectedBatch} batch students.`;
+});
+</script>
+
+<section>
+<div class="container">
+    <h3>Placements</h3>
+    <p class="lead">Current drives & upcoming opportunities.</p>
+
+    <div id="placementForm"></div>
+    <div class="grid cols-3" id="placementList"></div>
+</div>
+</section>
+
+<script>
+const COLLECTION = "placements";
+let placements = [];
+
+async function loadData(){
+  const raw = await apiList(COLLECTION);
+  placements = raw.map(item => ({ id: item.id, ...item.data }));
+}
+
+async function delPlacement(id){
+    if(!confirm("Delete this placement drive?")) return;
+    await apiDelete(COLLECTION, id);
+    await loadData();
+    render();
+}
+
+function render(){
+    const box = document.getElementById("placementList");
+    box.innerHTML = "";
+
+    const items = placements.slice().reverse();
+
+    items.forEach(p=>{
+        box.insertAdjacentHTML("beforeend",`
+            <div class="card">
+                <span class="tag">${p.status}</span>
+                <h4>${p.company}</h4>
+                <small>${p.details}</small>
+                <p style="margin-top:8px">${p.role}</p>
+
+                ${canEdit("placements") ? `
+                    <button onclick="delPlacement('${p.id}')"
+                        style="margin-top:12px;background:#e53935;color:#fff;border:none;padding:8px 14px;border-radius:6px;cursor:pointer">
+                        Delete
+                    </button>
+                ` : ``}
+            </div>
+        `);
+    });
+}
+
+if(canEdit("placements")){
+    document.getElementById("placementForm").innerHTML = `
+        <div class="card" style="margin-bottom:20px">
+            <h4>Add Placement Drive</h4>
+
+            <label>Company Name</label>
+            <input id="c" placeholder="e.g. TCS">
+
+            <label>Details</label>
+            <input id="d" placeholder="Last date / package info">
+
+            <label>Role Info</label>
+            <textarea id="r" rows="3" placeholder="Job roles / description"></textarea>
+
+            <label>Status</label>
+            <select id="s">
+                <option>Open</option>
+                <option>Upcoming</option>
+                <option>Archived</option>
+            </select>
+
+            <button class="btn gold" style="margin-top:10px" onclick="add()">Publish</button>
+        </div>
+    `;
+}
+
+async function add(){
+    const c = document.getElementById("c").value.trim();
+    const d = document.getElementById("d").value.trim();
+    const r = document.getElementById("r").value.trim();
+    const s = document.getElementById("s").value;
+
+    if(!c || !d || !r){ alert("Fill all fields"); return; }
+
+    await apiCreate(COLLECTION, { company: c, details: d, role: r, status: s });
+
+    document.getElementById("c").value="";
+    document.getElementById("d").value="";
+    document.getElementById("r").value="";
+
+    await loadData();
+    render();
+}
+
+loadData().then(render).catch(err => alert(err.message));
+renderFooter();
+</script>
+
+</body>
+</html>

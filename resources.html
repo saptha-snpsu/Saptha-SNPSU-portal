@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Resources — SAPTHA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
+<script src="script.js"></script>
+    <script>
+    const u = requireAuth();
+    renderHeader("resources.html");
+    </script>
+    <section>
+        <div class="container">
+            <h3>Resources</h3>
+            <p class="lead">Computer Science resources are enabled right now.</p>
+            <div class="grid cols-4">
+                <a class="card" href="departments.html">
+                    <span class="tag">Active</span>
+                    <h4>CSE</h4>
+                    <small>Computer Science & Engineering</small>
+                </a>
+                <div class="card">
+                    <h4>CSE</h4>
+                    <small>Computer Science</small>
+                </div>
+            </div>
+        </div>
+    </section>
+    <script>
+    renderFooter();
+    </script>
+    <script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"7f7b0fd8732c4326aae4b9d58d5c514a","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>

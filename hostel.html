@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hostel — SAPTHA</title>
+<link rel="stylesheet" href="style.css">
+
+<style>
+.menu-list li{
+  line-height:2;
+  font-family:system-ui;
+}
+
+.hostel-card{
+  padding:18px !important;
+}
+
+.announcements-list li{
+  list-style:none;
+}
+
+.section-gap{
+  margin-top:42px;
+}
+
+#hostelEditForm textarea,
+#hostelEditForm input{
+  width:100%;
+  padding:10px;
+  margin-top:8px;
+  border:1px solid #ddd;
+  border-radius:6px;
+  font-size:14px;
+}
+</style>
+</head>
+
+<body>
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
+<script src="script.js"></script>
+<script>
+const u = requireAuth();
+renderHeader("hostel.html");
+</script>
+
+<section>
+<div class="container">
+
+  <h3>Hostel</h3>
+  <p class="lead">Menu, contact and latest announcements.</p>
+
+  <div id="hostelEditForm"></div>
+
+  <div class="grid cols-2">
+    <div class="card hostel-card">
+      <h4>Weekly Menu</h4>
+      <ul class="menu-list" id="hostelMenu"></ul>
+    </div>
+
+    <div class="card hostel-card">
+      <h4>Contact</h4>
+      <p id="hostelContact" style="line-height:1.9"></p>
+    </div>
+  </div>
+
+  <h3 class="section-gap">Hostel Announcements</h3>
+
+  <div id="coordForm"></div>
+  <ul class="announcements-list" id="al"></ul>
+
+</div>
+</section>
+
+<script>
+const COLLECTION = "hostel_announcements";
+const INFO_COLLECTION = "hostel_info";
+let hostelAnnouncements = [];
+let hostelInfo = null;
+
+const DEFAULT_HOSTEL_INFO = {
+  menu: `Monday: Idli, Sambar, Rice, Rasam, Veg Curry
+Tuesday: Dosa, Chutney, Rice, Sambar, Poriyal
+Wednesday: Pongal, Vada, Rice, Curd Curry
+Thursday: Chapati, Kurma, Rice, Dal Fry
+Friday: Lemon Rice, Papad, Sambar, Veg Fry
+Saturday: Poori, Channa, Rice, Rasam
+Sunday: Special Meals, Sweet, Curd Rice`,
+  contact: `Hostel Warden: Mr. Ramesh
+Phone: +91 9036022191
+Email: hostel@snpsu.edu.in
+Timings: 9:00 AM - 6:00 PM`
+};
+
+async function loadItems(){
+  const rawAnn = await apiList(COLLECTION);
+  hostelAnnouncements = rawAnn.map(item => ({ id: item.id, ...item.data }));
+  const infoItems = await apiList(INFO_COLLECTION);
+  const lastInfo = infoItems[infoItems.length - 1];
+  hostelInfo = lastInfo ? { id: lastInfo.id, ...lastInfo.data } : DEFAULT_HOSTEL_INFO;
+}
+
+function escapeHTML(value){
+  return String(value || "").replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+}
+
+function fileToBase64(file){
+  return new Promise((res,rej)=>{
+    const r = new FileReader();
+    r.onload = ()=>res(r.result);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+async function deleteAnnouncement(id){
+  if(!confirm("Delete this announcement?")) return;
+  await apiDelete(COLLECTION, id);
+  await loadItems();
+  render();
+}
+
+function render(){
+  renderHostelInfo();
+  const al = document.getElementById("al");
+  al.innerHTML = "";
+
+  hostelAnnouncements.slice().reverse().forEach(a=>{
+    al.insertAdjacentHTML("beforeend",`
+      <li class="card" style="margin-bottom:14px">
+        <h4>${a.title}</h4>
+        <small>${a.date} · ${a.by}</small>
+        <p style="margin:10px 0">${a.body}</p>
+
+        ${a.file ? `
+          ${a.file.startsWith("data:image")
+            ? `<img src="${a.file}" style="max-width:240px;display:block;margin:10px 0;border-radius:8px">`
+            : `<a href="${a.file}" download class="btn sm">Download Attachment</a>`
+          }
+        ` : ``}
+
+        ${canEdit("hostel") ? `
+          <button class="btn sm" style="margin-top:10px;background:#e74c3c"
+            onclick="deleteAnnouncement('${a.id}')">
+            Delete
+          </button>
+        ` : ``}
+      </li>
+    `);
+  });
+}
+
+function renderHostelInfo(){
+  const info = hostelInfo || DEFAULT_HOSTEL_INFO;
+  document.getElementById("hostelMenu").innerHTML = info.menu
+    .split("\n")
+    .filter(Boolean)
+    .map(line=>{
+      const [label, ...rest] = line.split(":");
+      return rest.length
+        ? `<li><strong>${escapeHTML(label)}:</strong>${escapeHTML(rest.join(":"))}</li>`
+        : `<li>${escapeHTML(line)}</li>`;
+    }).join("");
+
+  document.getElementById("hostelContact").innerHTML = info.contact
+    .split("\n")
+    .filter(Boolean)
+    .map(line=>{
+      const [label, ...rest] = line.split(":");
+      return rest.length
+        ? `<strong>${escapeHTML(label)}:</strong>${escapeHTML(rest.join(":"))}`
+        : escapeHTML(line);
+    }).join("<br>");
+}
+
+if(canEdit("hostel")){
+  document.getElementById("hostelEditForm").innerHTML = `
+    <div class="card" style="margin:20px 0">
+      <h4>Edit Hostel Details</h4>
+      <label>Weekly Menu</label>
+      <textarea id="hm" rows="7"></textarea>
+      <label>Contact Details</label>
+      <textarea id="hc" rows="4"></textarea>
+      <button class="btn gold" style="margin-top:10px" onclick="saveHostelInfo()">Save Details</button>
+      <div id="hostelSaveStatus" style="font-size:13px;margin-top:8px"></div>
+    </div>`;
+
+  document.getElementById("coordForm").innerHTML = `
+    <div class="card" style="margin:20px 0">
+      <h4>Post Hostel Announcement</h4>
+      <label>Title</label>
+      <input id="t" placeholder="Title">
+      <label>Message</label>
+      <textarea id="b" rows="3" placeholder="Message..."></textarea>
+      <label>Attach File (PDF/Image)</label>
+      <input type="file" id="f">
+      <button class="btn gold" style="margin-top:10px" onclick="post()">Publish</button>
+    </div>`;
+}
+
+async function saveHostelInfo(){
+  const menu = document.getElementById("hm").value.trim();
+  const contact = document.getElementById("hc").value.trim();
+  const status = document.getElementById("hostelSaveStatus");
+
+  if(!menu || !contact){ alert("Fill menu and contact details"); return; }
+
+  try{
+    status.style.color = "#555";
+    status.textContent = "Saving...";
+    await apiCreate(INFO_COLLECTION, {menu, contact});
+    await loadItems();
+    render();
+    fillHostelForm();
+    status.style.color = "green";
+    status.textContent = "Saved.";
+  }catch(err){
+    status.style.color = "#e74c3c";
+    status.textContent = err.message;
+  }
+}
+
+function fillHostelForm(){
+  if(!canEdit("hostel")) return;
+  const info = hostelInfo || DEFAULT_HOSTEL_INFO;
+  document.getElementById("hm").value = info.menu;
+  document.getElementById("hc").value = info.contact;
+}
+
+async function post(){
+  const t = document.getElementById("t").value.trim();
+  const b = document.getElementById("b").value.trim();
+  const f = document.getElementById("f").files[0];
+
+  if(!t || !b){ alert("Fill all fields"); return; }
+
+  let fileData = null;
+  if(f) fileData = await fileToBase64(f);
+
+  await apiCreate(COLLECTION, {
+    title: t,
+    body: b,
+    by: "Warden",
+    date: new Date().toLocaleDateString(),
+    file: fileData
+  });
+
+  document.getElementById("t").value="";
+  document.getElementById("b").value="";
+  document.getElementById("f").value="";
+
+  await loadItems();
+  render();
+}
+
+loadItems().then(()=>{
+  render();
+  fillHostelForm();
+}).catch(err => alert(err.message));
+renderFooter();
+</script>
+
+</body>
+</html>

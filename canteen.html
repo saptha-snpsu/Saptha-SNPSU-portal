@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Canteen — SAPTHA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+    .canteen-section{
+        padding:60px 20px;
+        background:linear-gradient(to bottom,#f5f8ff,#ffffff);
+    }
+
+    .canteen-hero{
+        text-align:center;
+        margin-bottom:40px;
+    }
+
+    .canteen-hero h1{
+        font-size:38px;
+        color:#0b3d91;
+        margin-bottom:8px;
+        font-family:'Fraunces',serif;
+    }
+
+    .canteen-hero p{
+        color:#555;
+        font-size:18px;
+    }
+
+    .menu-grid{
+        gap:25px;
+        margin-top:30px;
+    }
+
+    .menu-card{
+        padding:25px;
+        border-left:6px solid #0b3d91;
+        border-radius:10px;
+        background:#fff;
+        box-shadow:0 10px 25px rgba(0,0,0,0.06);
+        transition:.3s ease;
+    }
+
+    .menu-card:hover{
+        transform:translateY(-6px);
+    }
+
+    .menu-card h4{
+        color:#0b3d91;
+        margin-bottom:12px;
+    }
+
+    .menu-card small{
+        color:#444;
+        line-height:1.8;
+        font-size:15px;
+    }
+
+    .contact-card{
+        margin-top:30px;
+        padding:20px;
+        border-left:6px solid #f1c40f;
+        border-radius:10px;
+        background:#fff;
+        box-shadow:0 10px 25px rgba(0,0,0,0.06);
+    }
+
+    .contact-card h4{
+        margin-bottom:10px;
+        color:#0b3d91;
+    }
+
+    #canteenEditForm textarea,
+    #canteenEditForm input{
+        width:100%;
+        padding:10px;
+        margin-top:8px;
+        border:1px solid #ddd;
+        border-radius:6px;
+        font-size:14px;
+    }
+    </style>
+</head>
+
+<body>
+
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
+<script src="script.js"></script>
+<script>
+const u = requireAuth();
+renderHeader("canteen.html");
+</script>
+
+<section class="canteen-section">
+    <div class="container">
+
+        <div class="canteen-hero">
+            <h1>Canteen</h1>
+            <p>Today's menu & contact details</p>
+        </div>
+
+        <div id="canteenEditForm"></div>
+        <div class="grid cols-3 menu-grid" id="canteenMenu"></div>
+
+        <div class="contact-card">
+            <h4>Contact</h4>
+            <p id="canteenContact"></p>
+        </div>
+
+    </div>
+</section>
+
+<script>
+const INFO_COLLECTION = "canteen_info";
+let canteenInfo = null;
+
+const DEFAULT_CANTEEN_INFO = {
+    menu: `Snacks
+Samosa - Rs 20
+Veg Puff - Rs 25
+Sandwich - Rs 40
+
+Meals
+Full Meals - Rs 70
+Biryani - Rs 90
+Fried Rice - Rs 80
+
+Beverages
+Tea - Rs 15
+Coffee - Rs 20
+Juice - Rs 40`,
+    contact: "Canteen Manager · 96XXX-XXXXX · Open 8 AM - 7 PM"
+};
+
+function escapeHTML(value){
+    return String(value || "").replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+}
+
+async function loadCanteenInfo(){
+    const items = await apiList(INFO_COLLECTION);
+    const last = items[items.length - 1];
+    canteenInfo = last ? { id: last.id, ...last.data } : DEFAULT_CANTEEN_INFO;
+}
+
+function parseMenu(menu){
+    return menu.split(/\n\s*\n/).map(block=>{
+        const lines = block.split("\n").map(x=>x.trim()).filter(Boolean);
+        return {title: lines[0] || "Menu", items: lines.slice(1)};
+    }).filter(group => group.title);
+}
+
+function renderCanteen(){
+    const info = canteenInfo || DEFAULT_CANTEEN_INFO;
+    document.getElementById("canteenMenu").innerHTML = parseMenu(info.menu).map(group => `
+        <div class="menu-card">
+            <h4>${escapeHTML(group.title)}</h4>
+            <small>${group.items.map(escapeHTML).join("<br>")}</small>
+        </div>
+    `).join("");
+    document.getElementById("canteenContact").textContent = info.contact;
+}
+
+if(canEdit("canteen")){
+    document.getElementById("canteenEditForm").innerHTML = `
+        <div class="contact-card" style="margin:0 0 25px">
+            <h4>Edit Canteen Details</h4>
+            <label>Menu</label>
+            <textarea id="cmenu" rows="12"></textarea>
+            <label>Contact Details</label>
+            <input id="ccontact">
+            <button class="btn gold" style="margin-top:10px" onclick="saveCanteenInfo()">Save Details</button>
+            <div id="canteenSaveStatus" style="font-size:13px;margin-top:8px"></div>
+        </div>`;
+}
+
+function fillCanteenForm(){
+    if(!canEdit("canteen")) return;
+    const info = canteenInfo || DEFAULT_CANTEEN_INFO;
+    document.getElementById("cmenu").value = info.menu;
+    document.getElementById("ccontact").value = info.contact;
+}
+
+async function saveCanteenInfo(){
+    const menu = document.getElementById("cmenu").value.trim();
+    const contact = document.getElementById("ccontact").value.trim();
+    const status = document.getElementById("canteenSaveStatus");
+
+    if(!menu || !contact){ alert("Fill menu and contact details"); return; }
+
+    try{
+        status.style.color = "#555";
+        status.textContent = "Saving...";
+        await apiCreate(INFO_COLLECTION, {menu, contact});
+        await loadCanteenInfo();
+        renderCanteen();
+        fillCanteenForm();
+        status.style.color = "green";
+        status.textContent = "Saved.";
+    }catch(err){
+        status.style.color = "#e74c3c";
+        status.textContent = err.message;
+    }
+}
+
+loadCanteenInfo().then(()=>{
+    renderCanteen();
+    fillCanteenForm();
+}).catch(err => alert(err.message));
+
+renderFooter();
+</script>
+
+</body>
+</html>

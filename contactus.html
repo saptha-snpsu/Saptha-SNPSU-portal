@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Contact Us — SAPTHA</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        /* ===== CONTACT PAGE DESIGN ===== */
+
+        .contact-section {
+            padding: 60px 20px;
+            background: linear-gradient(to bottom, #f5f8ff, #ffffff);
+        }
+
+        .contact-hero {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .contact-hero h1 {
+            font-size: 38px;
+            color: #0b3d91;
+            font-family: 'Fraunces', serif;
+            margin-bottom: 8px;
+        }
+
+        .contact-hero p {
+            color: #555;
+            font-size: 18px;
+        }
+
+        .contact-card {
+            padding: 25px;
+            border-left: 6px solid #0b3d91;
+            border-radius: 10px;
+            background: #fff;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+        }
+
+        .contact-card h4 {
+            color: #0b3d91;
+            margin-bottom: 12px;
+        }
+
+        .contact-card input,
+        .contact-card textarea {
+            width: 100%;
+            padding: 10px;
+            margin-top: 6px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .contact-card input:focus,
+        .contact-card textarea:focus {
+            outline: none;
+            border-color: #0b3d91;
+        }
+
+        .contact-card .btn {
+            background: #0b3d91;
+            color: #fff;
+        }
+
+        .contact-card .btn:hover {
+            opacity: .9;
+        }
+
+        .success-msg {
+            color: green;
+            font-size: 13px;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
+    <script src="script.js"></script>
+    <script>
+        requireAuth();
+        renderHeader("contactus.html");
+    </script>
+
+    <section class="contact-section">
+        <div class="container">
+
+            <div class="contact-hero">
+                <h1>Contact Developers</h1>
+                <p>Reach out to the SAPTHA developers</p>
+            </div>
+
+            <div class="grid cols-2">
+
+                <div class="contact-card" id="developerDetails">
+                    <h4>Developer Contact Info</h4>
+                    <p>Please select a developer from the dropdown to see their contact details.</p>
+                </div>
+
+                <div class="contact-card">
+                    <h4>Send a Message</h4>
+
+                    <label>Select Developer</label>
+                    <select id="devSelect" onchange="updateDevDetails()">
+                        <option value="" disabled selected>Choose a developer...</option>
+                        <option value="deekshapaic@gmail.com" data-phone="+91 9845977489">Deeksha Pai C</option>
+                        <option value="chaithanyaramachandra@gmail.com" data-phone="+91 8217865036">Chaithanya R
+                        </option>
+                        <option value="dhanugagan2006@gmail.com" data-phone="+91 82174 15366">Dhanush M</option>
+                        <option value="charanvlogs28@gmail.com" data-phone="+91 86181 27292">Charan S</option>
+                        <option value="devarajgr618@gmail.com" data-phone="+91 7337754518">Devaraju G R</option>
+                        <option value="kishore.education045@gmail.com" data-phone="+91 8495977045">Kishore S</option>
+                    </select>
+
+                    <label>Your Name</label>
+                    <input id="cn">
+
+                    <label>Message</label>
+                    <textarea id="cm" rows="4"></textarea>
+
+                    <button class="btn" onclick="send()" style="margin-top: 10px;">Open Email App to Send</button>
+                    <div id="sm" class="success-msg"></div>
+                </div>
+
+            </div>
+
+        </div>
+    </section>
+
+    <script>
+        function updateDevDetails() {
+            const sel = document.getElementById("devSelect");
+            const option = sel.options[sel.selectedIndex];
+            if (!option.value) return;
+
+            const name = option.text;
+            const email = option.value;
+            const phone = option.getAttribute("data-phone");
+
+            document.getElementById("developerDetails").innerHTML = `
+        <h4>${name}</h4>
+        <p>
+            <strong>Phone:</strong><br>
+            ${phone}
+            <br><br>
+            <strong>Email:</strong><br>
+            ${email}
+        </p>
+    `;
+        }
+
+        function send() {
+            const sel = document.getElementById("devSelect");
+            const email = sel.value;
+            const n = document.getElementById("cn").value.trim();
+            const m = document.getElementById("cm").value.trim();
+
+            if (!email) {
+                alert("Please select a developer to message.");
+                return;
+            }
+            if (!n || !m) {
+                alert("Name & message required");
+                return;
+            }
+
+            const subject = encodeURIComponent(`Message from ${n} via Saptha Portal`);
+            const body = encodeURIComponent(`${m}\n\n---\nSent by: ${n}`);
+
+            // Open default mail client
+            window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+
+            document.getElementById("sm").textContent = "Opening your email app...";
+
+            setTimeout(() => {
+                document.getElementById("cn").value = "";
+                document.getElementById("cm").value = "";
+            }, 2000);
+        }
+
+        renderFooter();
+    </script>
+
+</body>
+
+</html>

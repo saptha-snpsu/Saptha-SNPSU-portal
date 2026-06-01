@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SAPTHA — Login</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+:root{
+    --primary:#0b3d91;
+    --primary-dark:#082a63;
+    --bg1:#0b3d91;
+    --bg2:#061a3a;
+    --card:#ffffff;
+    --muted:#777;
+    --border:#ddd;
+    --accent:#e74c3c;
+}
+
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins', sans-serif;}
+
+body{
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:linear-gradient(135deg,var(--bg1),var(--bg2));
+}
+
+.auth-card{
+    width:450px;
+    background:var(--card);
+    padding:40px;
+    border-radius:20px;
+    box-shadow:0 25px 60px rgba(0,0,0,0.3);
+}
+
+.brand{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-bottom:20px;
+}
+
+.main-logo{
+    width:45px;
+    height:45px;
+    object-fit:contain;
+}
+
+.brand-title{font-size:20px;margin:0;}
+.brand-sub{color:var(--muted);font-size:13px;}
+
+h2{margin-top:10px;}
+.sub{color:var(--muted);font-size:14px;}
+
+.role-toggle{
+    display:flex;
+    border:1px solid var(--border);
+    border-radius:10px;
+    overflow:hidden;
+    margin:20px 0;
+}
+
+.role-toggle button{
+    flex:1;
+    padding:12px;
+    border:none;
+    background:#f2f2f2;
+    cursor:pointer;
+    font-weight:600;
+}
+
+.role-toggle button.active{
+    background:var(--primary);
+    color:#fff;
+}
+
+.input-group{position:relative;margin-top:18px;}
+
+.input-group input{
+    width:100%;
+    padding:14px 12px;
+    border-radius:8px;
+    border:1px solid #ccc;
+    background:transparent;
+}
+
+.input-group select{
+    width:100%;
+    padding:14px 12px;
+    border-radius:8px;
+    border:1px solid #ccc;
+    background:#fff;
+}
+
+.input-group label{
+    position:absolute;
+    left:12px;
+    top:14px;
+    font-size:14px;
+    color:#888;
+    background:#fff;
+    padding:0 4px;
+    transition:0.3s;
+}
+
+.input-group input:focus + label,
+.input-group input:not(:placeholder-shown) + label{
+    top:-8px;
+    font-size:11px;
+    color:var(--primary);
+}
+
+.input-group input:focus{
+    outline:none;
+    border-color:var(--primary);
+    box-shadow:0 0 0 2px rgba(11,61,145,0.2);
+}
+
+.btn{
+    width:100%;
+    padding:12px;
+    background:var(--primary);
+    color:#fff;
+    border:none;
+    border-radius:30px;
+    margin-top:20px;
+    cursor:pointer;
+}
+
+.btn:hover{ background:var(--primary-dark); }
+
+#err{
+    color:var(--accent);
+    font-size:13px;
+    margin-top:10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="auth-card">
+
+    <div class="brand">
+        <img src="logo.jpg" class="main-logo">
+        <div>
+            <h1 class="brand-title">SAPTHA</h1>
+            <small class="brand-sub">Sapthagiri NPS University</small>
+        </div>
+    </div>
+
+    <h2>Sign in to start your session</h2>
+    <p class="sub">Enter your CSE SRN to continue.</p>
+
+    <div class="role-toggle" id="roleToggle">
+        <button type="button" class="active" data-role="student">Student</button>
+        <button type="button" data-role="coordinator">Coordinator</button>
+    </div>
+
+    <form id="loginForm">
+
+        <div class="input-group" id="coordRoleBox" style="display:none">
+            <select id="coordRole">
+                <option value="course_coordinator">Course Coordinator</option>
+                <option value="director">Director</option>
+                <option value="hrd_coordinator">HRD Coordinator</option>
+                <option value="hostel_coordinator">Hostel Coordinator</option>
+                <option value="canteen_coordinator">Canteen Coordinator</option>
+                <option value="library_coordinator">Library Coordinator</option>
+                <option value="dsa_coordinator">DSA Member</option>
+                <option value="placement_coordinator">Placement Coordinator</option>
+                <option value="sports_coordinator">Sports Coordinator</option>
+                <option value="events_coordinator">Events Coordinator</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <input id="srn" placeholder=" " required autocomplete="off">
+            <label>SRN</label>
+        </div>
+
+        <div class="input-group" id="pwdBox" style="display:none">
+            <input id="pwd" type="password" placeholder=" ">
+            <label>Password</label>
+        </div>
+
+        <div id="err" style="display:none"></div>
+
+        <button class="btn" type="submit">Login</button>
+    </form>
+
+    <p class="sub" style="text-align:center;margin-top:16px;font-size:12px">
+        Currently enabled for Computer Science students only
+    </p>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
+<script src="script.js"></script>
+<script>
+let role = "student";
+const coordRole = document.getElementById("coordRole");
+const coordRoleBox = document.getElementById("coordRoleBox");
+const pwdBox = document.getElementById("pwdBox");
+
+/* ROLE SWITCH */
+document.querySelectorAll("#roleToggle button").forEach(b=>{
+    b.onclick=()=>{
+        document.querySelectorAll("#roleToggle button").forEach(x=>x.classList.remove("active"));
+        b.classList.add("active");
+        const isCoord = b.dataset.role === "coordinator";
+        role = isCoord ? coordRole.value : "student";
+        coordRoleBox.style.display = isCoord ? "block" : "none";
+        pwdBox.style.display = isCoord ? "block" : "none";
+    };
+});
+
+coordRole.onchange = () => {
+    if(coordRoleBox.style.display !== "none") role = coordRole.value;
+};
+
+/* LOGIN */
+document.getElementById("loginForm").addEventListener("submit", async e=>{
+    e.preventDefault();
+
+    const srn=document.getElementById("srn").value.trim().toUpperCase();
+    const password=document.getElementById("pwd").value;
+    const err=document.getElementById("err");
+
+    try {
+        const usersRef = window.firebase.database().ref('users');
+        const snapshot = await usersRef.orderByChild('srn').equalTo(srn).once('value');
+        
+        let userData = null;
+        if (snapshot.exists()) {
+            snapshot.forEach(child => { userData = child.val(); });
+        }
+
+        if (role !== "student") {
+            // Coordinators MUST exist and have the correct password and role
+            if (!userData || userData.password !== password) {
+                throw new Error("Invalid SRN or Password");
+            }
+            if (userData.role !== role) {
+                throw new Error(`You don't have ${role} privileges.`);
+            }
+        } else {
+            // Students can login automatically (auto-register on first login)
+            if (!userData) {
+                userData = { srn: srn, role: "student", created_at: new Date().toISOString() };
+                await usersRef.child(srn).set(userData);
+            }
+        }
+
+        localStorage.setItem("snps_user",JSON.stringify({
+            ...userData,
+            srn,
+            role: userData.role || 'student'
+        }));
+
+        window.location.href="home.html";
+
+    } catch(ex) {
+        err.textContent=ex.message;
+        err.style.display="block";
+    }
+});
+</script>
+
+</body>
+</html>

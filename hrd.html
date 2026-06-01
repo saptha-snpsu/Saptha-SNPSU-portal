@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HRD — SAPTHA</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+
+<style>
+.hrd-card{
+  padding:18px !important;
+  transition:0.3s;
+}
+.hrd-card:hover{
+  transform:translateY(-5px);
+}
+.hrd-grid{
+  gap:20px;
+}
+.tag{
+  margin-bottom:8px;
+  display:inline-block;
+}
+</style>
+</head>
+
+<body>
+
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
+<script src="script.js"></script>
+<script>
+const u = requireAuth();
+renderHeader("hrd.html");
+const selectedBatch = getEffectiveBatch();
+document.addEventListener("DOMContentLoaded", ()=>{
+    const heading = document.querySelector("section h3");
+    const subtitle = document.querySelector("section .lead");
+    if(heading) heading.textContent = `Human Resource Development — Batch ${selectedBatch}`;
+    if(subtitle) subtitle.textContent = `Workshops, training programs and soft-skill modules for ${selectedBatch} students.`;
+});
+</script>
+
+<section>
+<div class="container">
+    <h3>Human Resource Development</h3>
+    <p class="lead">Workshops, training programs and soft-skill modules.</p>
+
+    <div id="hrdForm"></div>
+    <div class="grid cols-3 hrd-grid" id="hrdList"></div>
+</div>
+</section>
+
+<script>
+const COLLECTION = "hrd_programs";
+let programs = [];
+
+async function loadData(){
+  const raw = await apiList(COLLECTION);
+  programs = raw.map(item => ({ id: item.id, ...item.data }));
+}
+
+async function deleteProgram(id){
+    if(!confirm("Delete this program?")) return;
+    await apiDelete(COLLECTION, id);
+    await loadData();
+    render();
+}
+
+function render(){
+    const list = document.getElementById("hrdList");
+    list.innerHTML = "";
+
+    const items = programs.slice().reverse();
+
+    if(items.length === 0){
+      list.innerHTML = `<div class="empty">No HRD programs added yet.</div>`;
+      return;
+    }
+
+    items.forEach(p=>{
+        list.insertAdjacentHTML("beforeend",`
+            <div class="card hrd-card">
+                <span class="tag">${p.status}</span>
+                <h4>${p.title}</h4>
+                <small>${p.schedule}</small>
+                <p style="margin-top:10px">${p.desc}</p>
+
+                ${canEdit("hrd") ? `
+                  <button class="btn sm" style="margin-top:12px;background:#e74c3c"
+                    onclick="deleteProgram('${p.id}')">
+                    Delete
+                  </button>
+                ` : ""}
+            </div>
+        `);
+    });
+}
+
+if(canEdit("hrd")){
+    document.getElementById("hrdForm").innerHTML = `
+        <div class="card" style="margin-bottom:22px">
+            <h4>Add HRD Program</h4>
+
+            <label>Title</label>
+            <input id="t" placeholder="Program title">
+
+            <label>Schedule</label>
+            <input id="s" placeholder="e.g. Every Mon & Wed · 4–5:30 PM">
+
+            <label>Description</label>
+            <textarea id="d" rows="3"></textarea>
+
+            <label>Status</label>
+            <select id="st">
+                <option>Upcoming</option>
+                <option>Ongoing</option>
+                <option>Archive</option>
+            </select>
+
+            <button class="btn gold" style="margin-top:12px" onclick="add()">Publish</button>
+        </div>
+    `;
+}
+
+async function add(){
+    const t = document.getElementById("t").value.trim();
+    const s = document.getElementById("s").value.trim();
+    const d = document.getElementById("d").value.trim();
+    const st = document.getElementById("st").value;
+
+    if(!t || !s || !d){ alert("Fill all fields"); return; }
+
+    await apiCreate(COLLECTION, { title: t, schedule: s, desc: d, status: st });
+
+    document.getElementById("t").value="";
+    document.getElementById("s").value="";
+    document.getElementById("d").value="";
+
+    await loadData();
+    render();
+}
+
+loadData().then(render).catch(err => alert(err.message));
+renderFooter();
+</script>
+
+</body>
+</html>

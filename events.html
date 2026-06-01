@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Events — SAPTHA</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
+<script src="script.js"></script>
+<script>
+const u = requireAuth();
+renderHeader("events.html");
+</script>
+
+<section>
+<div class="container">
+
+  <h3>Events</h3>
+  <p class="lead">Fests, workshops & cultural nights.</p>
+
+  <div id="eventForm"></div>
+  <div class="grid cols-2" id="eventList"></div>
+
+</div>
+</section>
+
+<script>
+const COLLECTION = "events";
+let events = [];
+
+async function loadData(){
+  const raw = await apiList(COLLECTION);
+  events = raw.map(item => ({ id: item.id, ...item.data }));
+}
+
+async function delEvent(id){
+  if(!confirm("Delete this event?")) return;
+  await apiDelete(COLLECTION, id);
+  await loadData();
+  render();
+}
+
+function render(){
+  const box = document.getElementById("eventList");
+  box.innerHTML = "";
+
+  const items = events.slice().reverse();
+
+  items.forEach(e=>{
+    box.insertAdjacentHTML("beforeend",`
+      <div class="card">
+        <span class="tag">${e.type}</span>
+        <h4>${e.title}</h4>
+        <small>${e.date}</small>
+        <p style="margin-top:8px">${e.desc}</p>
+
+        ${canEdit("events") ? `
+          <button onclick="delEvent('${e.id}')"
+            style="margin-top:10px;background:#e53935;color:#fff;border:none;padding:8px 14px;border-radius:6px;cursor:pointer">
+            Delete
+          </button>
+        ` : ``}
+      </div>
+    `);
+  });
+}
+
+if(canEdit("events")){
+  document.getElementById("eventForm").innerHTML = `
+    <div class="card" style="margin-bottom:20px">
+      <h4>Add New Event</h4>
+
+      <label>Event Title</label>
+      <input id="t" placeholder="e.g. SYNAPSE 2026">
+
+      <label>Type</label>
+      <select id="tp">
+        <option>Fest</option>
+        <option>Workshop</option>
+        <option>Cultural</option>
+        <option>Seminar</option>
+      </select>
+
+      <label>Date / Info</label>
+      <input id="d" placeholder="e.g. 12–14 September">
+
+      <label>Description</label>
+      <textarea id="ds" rows="3"></textarea>
+
+      <button class="btn gold" style="margin-top:10px" onclick="add()">Publish Event</button>
+    </div>
+  `;
+}
+
+async function add(){
+  const t = document.getElementById("t").value.trim();
+  const tp = document.getElementById("tp").value;
+  const d = document.getElementById("d").value.trim();
+  const ds = document.getElementById("ds").value.trim();
+
+  if(!t || !d || !ds){ alert("Fill all fields"); return; }
+
+  await apiCreate(COLLECTION, { title: t, type: tp, date: d, desc: ds });
+
+  document.getElementById("t").value="";
+  document.getElementById("d").value="";
+  document.getElementById("ds").value="";
+
+  await loadData();
+  render();
+}
+
+loadData().then(render).catch(err => alert(err.message));
+renderFooter();
+</script>
+
+</body>
+</html>

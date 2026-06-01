@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAPTHA — Home</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        /* ---------- HERO ---------- */
+        .hero-image {
+            position: relative;
+            height: 92vh;
+            background: url("bg.png") center/cover no-repeat;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: #fff;
+        }
+
+        .hero-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to bottom, rgba(0, 0, 0, .65), rgba(0, 0, 0, .55));
+            backdrop-filter: blur(2px);
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 850px;
+        }
+
+        .hero-content h2 {
+            font-size: 40px;
+            line-height: 1.3;
+            margin-bottom: 16px;
+        }
+
+        .hero-content p {
+            font-size: 18px;
+            opacity: .95;
+            margin-bottom: 26px;
+        }
+
+        /* ---------- CARDS ---------- */
+        .card {
+            background: #fff !important;
+            border-radius: 18px;
+            padding: 22px;
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.07);
+            border: 1px solid #eee;
+            transition: .35s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 18px 35px rgba(0, 0, 0, 0.10);
+        }
+
+        /* ---------- GRID ---------- */
+        .grid.cols-3 {
+            margin-top: 26px;
+            gap: 22px;
+        }
+
+        /* ---------- LEADERSHIP ---------- */
+        .leadership-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 26px;
+            margin-top: 26px;
+        }
+
+        @media(max-width:900px) {
+            .leadership-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .insta-box {
+            background: #f3e8ff;
+            border-radius: 12px;
+            padding: 14px;
+            margin-top: 14px;
+        }
+
+        .contact-box {
+            background: #e6f7ec;
+            border-radius: 12px;
+            padding: 14px;
+            margin-top: 12px;
+        }
+
+        .main-logo {
+            width: 130px;
+            height: 130px;
+            margin: 12px auto;
+        }
+
+        /* ---------- SECTION SPACING ---------- */
+        section {
+            padding: 60px 0;
+        }
+
+        .lead {
+            font-size: 17px;
+            color: #666;
+            margin-top: 6px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
+    <script src="script.js"></script>
+    <script>
+        const u = requireAuth();
+        renderHeader("home.html");
+    </script>
+
+    <!-- HERO -->
+    <section class="hero-image">
+        <div class="hero-overlay"></div>
+        <div class="hero-content container">
+            <h2>Your smart campus companion — designed to elevate your academics.</h2>
+            <p>Centralized notes, instant updates and seamless access to every campus resource.</p>
+
+            <div class="cta">
+                <a class="btn gold" href="departments.html">Go to Departments</a>
+                <a class="btn ghost" href="announcements.html"
+                    style="background:rgba(255,255,255,.15);color:#fff;border-color:#ffffff66">
+                    View Announcements
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section>
+        <div class="container">
+            <h3>Begin your academic journey</h3>
+            <p class="lead">Centre for everything — your semester, your subjects, your notes.</p>
+
+            <div class="grid cols-3">
+                <a class="card" href="departments.html">
+                    <span class="tag">My Branch</span>
+                    <h4 id="branchH">—</h4>
+                    <small id="branchN">—</small>
+                </a>
+
+                <a class="card" href="announcements.html">
+                    <span class="tag">Updates</span>
+                    <h4>Announcements</h4>
+                    <small>Latest notices</small>
+                </a>
+
+                <a class="card" href="hrd.html">
+                    <span class="tag">HRD</span>
+                    <h4>Human Resource Dev.</h4>
+                    <small>Workshops & training</small>
+                </a>
+
+                <a class="card" href="placements.html">
+                    <span class="tag">Career</span>
+                    <h4>Placements</h4>
+                    <small>Drives & archives</small>
+                </a>
+
+                <a class="card" href="library.html">
+                    <span class="tag">Library</span>
+                    <h4>E-Library</h4>
+                    <small>Books & references</small>
+                </a>
+
+                <a class="card" href="dsa.html">
+                    <span class="tag">Practice</span>
+                    <h4>DSA</h4>
+                    <small>Practice coding</small>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- LEADERSHIP -->
+    <section style="background:#fff;border-top:1px solid #eee;border-bottom:1px solid #eee;">
+        <div class="container">
+            <h3>Our Leadership</h3>
+            <p class="lead">Reach the SAPTHA team and SNPSU administration</p>
+
+            <div class="leadership-grid">
+
+                <div class="card">
+                    <h4>SAPTHA Team</h4>
+                    <small>Initiative</small>
+
+                    <a href="https://www.instagram.com/saptha_snpsu/" target="_blank" class="insta-box"
+                        style="display:block;text-decoration:none;color:#222">
+                        <strong>@saptha_snpsu</strong><br>
+                        <small>Follow on Instagram</small>
+                    </a>
+
+                    <a href="contactus.html" class="contact-box" style="display:block;text-decoration:none;color:#222">
+                        <strong>Dhanush M</strong><br>
+                        <strong>Deeksha Pai C</strong><br>
+                        <strong>Chaithanya R</strong><br>
+                        <strong>Charan S</strong><br>
+                        <strong>Dhanush P</strong><br>
+                        <strong>Kishore S</strong><br>
+                        <strong>Devaraju G R</strong><br>
+                        <small>Saptha Developers</small>
+                    </a>
+                </div>
+
+                <div class="card">
+                    <h4>SNPSU Administration</h4>
+                    <p>#14/5, Chikkasandra,<br>Hesaraghatta Main Road,<br>Bengaluru - 560057</p>
+                    <p>9900072632 / 9036022191-95<br>080-28372800 / 080-29633636</p>
+                    <p><a href="mailto:admissions@snpsu.edu.in">admissions@snpsu.edu.in</a></p>
+                </div>
+
+                <div class="card"
+                    style="text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+                    <h4>Leadership</h4>
+                    <img src="./logo.jpg" class="main-logo">
+                    <h4 style="margin-top:10px;">SAPTHA</h4>
+                    <small style="color:#c59d2a;font-weight:600">
+                        LEARN • INSPIRE • TOGETHER • ACHIEVE
+                    </small>
+                    <p style="font-size:12px;color:#777">
+                        SNPSU, Bengaluru
+                    </p>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <script>
+        document.getElementById("branchH").textContent = u.branch || "CSE";
+        document.getElementById("branchN").textContent = "Computer Science & Engineering · Batch " + getEffectiveBatch();
+        renderFooter();
+    </script>
+</body>
+
+</html>

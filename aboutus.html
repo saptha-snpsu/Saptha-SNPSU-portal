@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+
+    <title>About Us — SAPTHA</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+
+    /* ===== ABOUT PAGE STYLING ===== */
+
+    .about-section {
+
+        padding: 60px 20px;
+
+        background: linear-gradient(to bottom, #f5f8ff, #ffffff);
+
+    }
+
+    .about-hero {
+
+        text-align: center;
+
+        margin-bottom: 50px;
+
+    }
+
+    .about-hero h1 {
+
+        font-family: 'Fraunces', serif;
+
+        font-size: 42px;
+
+        color: #0b3d91;
+
+        margin-bottom: 10px;
+
+    }
+
+    .lead {
+
+        font-size: 18px;
+
+        color: #555;
+
+    }
+
+    .about-grid {
+
+        gap: 30px;
+
+        margin-bottom: 60px;
+
+    }
+
+    .highlight {
+
+        border-left: 6px solid #0b3d91;
+
+        background: #ffffff;
+
+        box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+
+        transition: 0.3s ease;
+
+        padding: 25px;
+
+    }
+
+    .highlight:hover {
+
+        transform: translateY(-6px);
+
+    }
+
+    .dept-title {
+
+        text-align: center;
+
+        font-size: 28px;
+
+        margin-bottom: 30px;
+
+        color: #0b3d91;
+
+        font-family: 'Fraunces', serif;
+
+    }
+
+    .dept-grid {
+
+        gap: 20px;
+
+    }
+
+    .dept-card {
+
+        text-align: center;
+
+        padding: 25px 15px;
+
+        transition: 0.3s ease;
+
+        border: 1px solid #e4e8f0;
+
+        border-radius: 8px;
+
+        background: #fff;
+
+    }
+
+    .dept-card h4 {
+
+        font-size: 20px;
+
+        color: #0b3d91;
+
+        margin-bottom: 6px;
+
+    }
+
+    .dept-card small {
+
+        color: #666;
+
+        font-size: 14px;
+
+    }
+
+    .dept-card:hover {
+
+        background: #0b3d91;
+
+        transform: translateY(-5px);
+
+    }
+
+    .dept-card:hover small,
+
+    .dept-card:hover h4 {
+
+        color: white;
+
+    }
+
+    </style>
+
+</head>
+
+<body>
+
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
+<script src="script.js"></script>
+
+<script>
+
+requireAuth();
+
+renderHeader("aboutus.html");
+
+</script>
+
+<section class="about-section">
+
+    <div class="container">
+
+        <div class="about-hero">
+
+            <h1>About SAPTHA</h1>
+
+            <p class="lead">
+
+                A Smart Campus platform proudly designed & developed by the CSE Department, 2024 Batch.
+
+            </p>
+
+        </div>
+
+        <div class="grid cols-2 about-grid">
+
+            <div class="card highlight">
+
+                <h4>Our Mission</h4>
+
+                <p>
+
+                    To create a centralized digital platform that integrates all campus resources, enabling seamless learning by providing students with instant access to notes, textbooks, announcements, and departmental updates in one place.
+
+                </p>
+
+            </div>
+
+            <div class="card highlight">
+
+                <h4>Our Vision</h4>
+
+                <p>
+
+                    To establish a single, reliable, and authoritative portal that replaces scattered communication channels, ensuring coordinators can publish verified information while students can easily access accurate and up-to-date resources whenever needed.
+
+                </p>
+
+            </div>
+
+        </div>
+
+        <h2 class="dept-title">Active Department</h2>
+
+        <div class="grid cols-4 dept-grid">
+
+            <div class="card dept-card"><h4>CSE</h4><small>Computer Science Engineering</small></div>
+
+        </div>
+
+    </div>
+
+</section>
+
+<script>
+
+renderFooter();
+
+</script>
+
+</body>
+
+</html>

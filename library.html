@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Library — SAPTHA</title>
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
+<script src="script.js"></script>
+<script>
+const u = requireAuth();
+renderHeader("library.html");
+</script>
+
+<section>
+<div class="container">
+  <h3>E-Library</h3>
+  <p class="lead">Coordinator-uploaded textbooks & reference materials.</p>
+
+  <div id="coord"></div>
+  <ul class="notes-list" id="list"></ul>
+</div>
+</section>
+
+<script>
+const COLLECTION = "library";
+let books = [];
+
+async function loadItems(){
+  const raw = await apiList(COLLECTION);
+  books = raw.map(item => ({ id: item.id, ...item.data }));
+}
+
+function fileToBase64(file){
+  return new Promise((res,rej)=>{
+    const r = new FileReader();
+    r.onload = ()=>res(r.result);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+function fmtSize(bytes){
+  return (bytes/1024/1024).toFixed(2) + " MB";
+}
+
+function downloadDataURL(data, name){
+  const a = document.createElement("a");
+  a.href = data;
+  a.download = name;
+  a.click();
+}
+
+async function deleteBook(id){
+  if(!confirm("Delete this book?")) return;
+  await apiDelete(COLLECTION, id);
+  await loadItems();
+  render();
+}
+
+function render(){
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+
+  const visibleBooks = books.slice().reverse();
+
+  if(visibleBooks.length === 0){
+    list.innerHTML = '<div class="empty">No books uploaded yet.</div>';
+    return;
+  }
+
+  visibleBooks.forEach(n=>{
+    list.insertAdjacentHTML("beforeend",`
+      <li class="card" style="margin-bottom:12px;padding:12px">
+        <div>
+          <strong>${n.name}</strong><br>
+          <span class="file-meta">${n.by} · ${n.date} · ${fmtSize(n.size)}</span>
+        </div>
+
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <button class="btn sm" onclick="downloadDataURL('${n.data}','${n.name}')">Download</button>
+          ${canEdit("library")
+            ? `<button class="btn sm danger" onclick="deleteBook('${n.id}')">Delete</button>`
+            : ``}
+        </div>
+      </li>
+    `);
+  });
+}
+
+if(canEdit("library")){
+  document.getElementById("coord").innerHTML = `
+    <div class="card" style="margin-bottom:18px">
+      <h4>Upload Textbook</h4>
+      <input type="file" id="lf">
+      <button class="btn gold sm" style="margin-top:8px" onclick="upload()">Upload</button>
+    </div>`;
+}
+
+async function upload(){
+  const f = document.getElementById("lf").files[0];
+  if(!f) return alert("Choose a file");
+  if(f.size > 8 * 1024 * 1024) return alert("Max 8MB");
+
+  const data = await fileToBase64(f);
+
+  await apiCreate(COLLECTION, {
+    name: f.name,
+    size: f.size,
+    data: data,
+    by: "Coordinator",
+    date: new Date().toLocaleDateString()
+  });
+
+  document.getElementById("lf").value="";
+  await loadItems();
+  render();
+}
+
+loadItems().then(render).catch(err => alert(err.message));
+renderFooter();
+</script>
+
+</body>
+</html>

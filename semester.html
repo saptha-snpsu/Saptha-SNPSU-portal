@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SAPTHA — Semester</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+
+<style>
+.add-btn{
+  position: fixed;
+  top: 90px;
+  right: 20px;
+  width: 55px;
+  height: 55px;
+  border-radius: 50%;
+  background: gold;
+  border: none;
+  font-size: 30px;
+  font-weight: bold;
+  cursor: pointer;
+  z-index: 99999;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+}
+</style>
+
+</head>
+
+<body>
+
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
+<script src="script.js"></script>
+
+<script>
+const u = requireAuth();
+renderHeader("departments.html");
+</script>
+
+<section>
+<div class="container">
+
+    <a class="back-link" href="departments.html">← Back to Departments</a>
+
+    <h3 id="t">Loading...</h3>
+    <p class="lead">Click a subject to view modules and notes.</p>
+
+    <div class="grid cols-3" id="sGrid"></div>
+
+</div>
+</section>
+
+<script>
+const q = new URLSearchParams(location.search);
+const sem = q.get("sem") || "1";
+const selectedBatch = getEffectiveBatch();
+const branch = "CSE";
+
+document.getElementById("t").textContent =
+    `CSE (${selectedBatch} Batch, Sem ${sem})`;
+
+const COLLECTION = "subjects";
+const scope = `${branch}_${sem}`;
+let subjects = [];
+
+async function loadSubjects(){
+    const raw = await apiList(COLLECTION, scope);
+    subjects = raw.map(item => ({
+        id: item.id,
+        ...item.data
+    }));
+}
+
+async function deleteSubject(id){
+    if(!confirm("Delete this subject?")) return;
+    await apiDelete(COLLECTION, id);
+    await loadSubjects();
+    render();
+}
+
+function render(){
+    const grid = document.getElementById("sGrid");
+    grid.innerHTML = "";
+
+    if(subjects.length === 0){
+        grid.innerHTML = `<div class="empty">No subjects listed yet. Click + to add.</div>`;
+        return;
+    }
+
+    subjects.forEach(s => {
+        grid.insertAdjacentHTML("beforeend", `
+            <div class="card subj-card">
+                <a href="subject.html?sem=${sem}&s=${encodeURIComponent(s.name)}">
+                    <span class="tag">Semester ${sem}</span>
+                    <h4>${s.name}</h4>
+                    <small>${s.desc || "Click to view modules & notes"}</small>
+                </a>
+                ${canEdit("departments") ? `
+                  <button class="btn sm" style="margin-top:10px;background:#e74c3c"
+                    onclick="deleteSubject('${s.id}')">
+                    Delete
+                  </button>
+                ` : ""}
+            </div>
+        `);
+    });
+}
+
+async function addSubject(){
+    const name = prompt("Enter subject name:");
+    if(!name) return;
+    const desc = prompt("Enter description (optional):");
+    await apiCreate(COLLECTION, {
+        scope,
+        branch,
+        sem,
+        name,
+        desc: desc || ""
+    });
+    await loadSubjects();
+    render();
+}
+
+if(canEdit("departments")){
+    const btn = document.createElement("button");
+    btn.className = "add-btn";
+    btn.innerHTML = "+";
+    btn.onclick = addSubject;
+    document.body.appendChild(btn);
+}
+
+loadSubjects().then(render).catch(err => alert(err.message));
+renderFooter();
+</script>
+
+</body>
+</html>

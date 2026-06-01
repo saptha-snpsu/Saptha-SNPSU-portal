@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DSA — SAPTHA</title>
+
+<link rel="stylesheet" href="style.css">
+
+<style>
+.dsa-section{
+    padding:60px 20px;
+    background:linear-gradient(to bottom,#f5f8ff,#ffffff);
+}
+
+.dsa-hero{
+    text-align:center;
+    margin-bottom:35px;
+}
+
+.dsa-hero h1{
+    font-size:38px;
+    color:#0b3d91;
+    margin-bottom:8px;
+}
+
+.dsa-hero p{
+    color:#555;
+    font-size:18px;
+}
+
+.announcements-list{
+    list-style:none;
+    padding:0;
+    margin-top:20px;
+}
+
+.announcements-list li{
+    background:#fff;
+    border-left:6px solid #0b3d91;
+    border-radius:10px;
+    padding:18px;
+    margin-bottom:16px;
+    box-shadow:0 8px 20px rgba(0,0,0,0.06);
+    transition:.3s ease;
+}
+
+.announcements-list li:hover{
+    transform:translateY(-6px);
+}
+
+#coordForm .card{
+    border-left:6px solid #f1c40f;
+    box-shadow:0 10px 25px rgba(0,0,0,0.07);
+}
+
+#coordForm select,
+#coordForm textarea,
+#coordForm input{
+    width:100%;
+    padding:10px;
+    margin-top:8px;
+    border:1px solid #ddd;
+    border-radius:6px;
+    font-size:14px;
+}
+
+#coordForm select:focus,
+#coordForm textarea:focus,
+#coordForm input:focus{
+    outline:none;
+    border-color:#0b3d91;
+}
+
+.btn.gold{
+    background:#0b3d91;
+    color:#fff;
+}
+</style>
+</head>
+
+<body>
+
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
+<script src="script.js"></script>
+<script>
+const u = requireAuth();
+renderHeader("dsa.html");
+</script>
+
+<section class="dsa-section">
+<div class="container">
+
+  <div class="dsa-hero">
+      <h1>DSA & Activities</h1>
+      <p>Updates, files and announcements for all activities</p>
+  </div>
+
+  <div id="coordForm"></div>
+  <ul class="announcements-list" id="al"></ul>
+
+</div>
+</section>
+
+<script>
+const COLLECTION = "activity_announcements";
+let activityItems = [];
+
+async function loadItems(){
+  const raw = await apiList(COLLECTION);
+  activityItems = raw.map(item => ({ id: item.id, ...item.data }));
+}
+
+function fileToBase64(file){
+  return new Promise((res,rej)=>{
+    const r = new FileReader();
+    r.onload = ()=>res(r.result);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+async function delItem(id){
+  if(!confirm("Delete this post?")) return;
+  await apiDelete(COLLECTION, id);
+  await loadItems();
+  render();
+}
+
+function render(){
+  const al = document.getElementById("al");
+  al.innerHTML = "";
+
+  const items = activityItems.slice().reverse();
+
+  items.forEach(a=>{
+    al.insertAdjacentHTML("beforeend",`
+      <li>
+        <h4>${a.title}</h4>
+        <small>${a.date} · ${a.by}</small>
+        <p style="margin:8px 0">${a.body}</p>
+
+        ${a.file ? `
+          ${a.file.startsWith("data:image")
+            ? `<img src="${a.file}" style="max-width:220px;display:block;margin:8px 0;border-radius:8px">`
+            : `<a href="${a.file}" download class="btn">Download Attachment</a>`
+          }
+        ` : ``}
+
+        ${canEdit("dsa") ? `
+          <button onclick="delItem('${a.id}')"
+            style="margin-top:10px;background:#e53935;color:#fff;border:none;padding:8px 14px;border-radius:6px;cursor:pointer">
+            Delete
+          </button>
+        ` : ``}
+      </li>
+    `);
+  });
+}
+
+if(canEdit("dsa")){
+  document.getElementById("coordForm").innerHTML = `
+    <div class="card" style="margin-bottom:22px;padding:20px">
+      <h4>Post Activity Update</h4>
+
+      <label>Title (Activity)</label>
+      <select id="t">
+        <option>Art and Sketch</option>
+        <option>Anchoring</option>
+        <option>Photography</option>
+        <option>Dance</option>
+        <option>Music</option>
+        <option>Theatre</option>
+        <option>Kannada Culture</option>
+        <option>Fashion Vibes</option>
+      </select>
+
+      <label>Message</label>
+      <textarea id="b" rows="3" placeholder="Message..."></textarea>
+
+      <label>Attach File (PDF/Image)</label>
+      <input type="file" id="f">
+
+      <button class="btn gold" style="margin-top:12px" onclick="post()">Publish</button>
+    </div>`;
+}
+
+async function post(){
+  const t = document.getElementById("t").value;
+  const b = document.getElementById("b").value.trim();
+  const f = document.getElementById("f").files[0];
+
+  if(!b){ alert("Enter message"); return; }
+
+  let fileData = null;
+  if(f) fileData = await fileToBase64(f);
+
+  await apiCreate(COLLECTION, {
+    title: t,
+    body: b,
+    by: "Coordinator",
+    date: new Date().toLocaleDateString(),
+    file: fileData
+  });
+
+  document.getElementById("b").value="";
+  document.getElementById("f").value="";
+
+  await loadItems();
+  render();
+}
+
+loadItems().then(render).catch(err => alert(err.message));
+renderFooter();
+</script>
+
+</body>
+</html>

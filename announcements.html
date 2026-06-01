@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SAPTHA — Announcements</title>
+
+<link rel="stylesheet" href="style.css">
+
+<style>
+.announce-section{
+    padding:60px 20px;
+    background:linear-gradient(to bottom,#f5f8ff,#ffffff);
+}
+
+.announce-hero{
+    text-align:center;
+    margin-bottom:40px;
+}
+
+.announce-hero h1{
+    font-size:38px;
+    color:#0b3d91;
+    margin-bottom:8px;
+}
+
+.announce-hero p{
+    color:#555;
+    font-size:18px;
+}
+
+.announcements-list{
+    list-style:none;
+    padding:0;
+    margin-top:20px;
+}
+
+.announcements-list li{
+    border-left:6px solid #0b3d91;
+    box-shadow:0 8px 20px rgba(0,0,0,0.06);
+    border-radius:10px;
+    transition:.3s ease;
+    background:#fff;
+}
+
+.announcements-list li:hover{
+    transform:translateY(-5px);
+}
+
+.empty{
+    text-align:center;
+    padding:40px;
+    color:#777;
+}
+
+#coordForm .card{
+    border-left:6px solid #f1c40f;
+    box-shadow:0 10px 25px rgba(0,0,0,0.07);
+}
+
+#coordForm input,
+#coordForm textarea{
+    width:100%;
+    padding:10px;
+    margin-top:8px;
+    border:1px solid #ddd;
+    border-radius:6px;
+    font-size:14px;
+}
+
+#coordForm input:focus,
+#coordForm textarea:focus{
+    outline:none;
+    border-color:#0b3d91;
+}
+
+.btn.gold{
+    background:#0b3d91;
+    color:#fff;
+}
+
+.btn.gold:hover{
+    opacity:.9;
+}
+</style>
+</head>
+
+<body>
+
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
+<script src="script.js"></script>
+<script>
+const u = requireAuth();
+renderHeader("announcements.html");
+const selectedBatch = getEffectiveBatch();
+document.addEventListener('DOMContentLoaded', ()=>{
+  const heading = document.querySelector('.announce-hero h1');
+  const subtitle = document.querySelector('.announce-hero p');
+  if(heading) heading.textContent = `Department Announcements — Batch ${selectedBatch}`;
+  if(subtitle) subtitle.textContent = `Latest verified updates for ${selectedBatch} batch students.`;
+});
+</script>
+
+<section class="announce-section">
+<div class="container">
+
+  <div class="announce-hero">
+      <h1>Department Announcements</h1>
+      <p>Latest verified updates from directors</p>
+  </div>
+
+  <div id="coordForm"></div>
+  <ul class="announcements-list" id="al"></ul>
+
+</div>
+</section>
+
+<script>
+const COLLECTION = "announcements";
+let announcements = [];
+
+function fileToDataURL(file){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function loadAnnouncements(){
+  const raw = await apiList(COLLECTION);
+  announcements = raw.map(item => ({ id: item.id, ...item.data }));
+}
+
+async function deleteAnnouncement(id){
+  if(!confirm("Delete this announcement?")) return;
+  await apiDelete(COLLECTION, id);
+  await loadAnnouncements();
+  render();
+}
+
+function render(){
+  const al = document.getElementById("al");
+  al.innerHTML = "";
+
+  const items = announcements.slice().reverse();
+
+  if(items.length === 0){
+    al.innerHTML = `<div class="empty">No announcements yet.</div>`;
+    return;
+  }
+
+  items.forEach(a=>{
+    al.insertAdjacentHTML("beforeend", `
+      <li class="card" style="padding:18px;margin-bottom:15px">
+        <h4>${a.title}</h4>
+        <small>${a.date} · ${a.by}</small>
+        <p style="margin-top:10px">${a.body}</p>
+
+        ${a.file ? `
+          ${a.file.startsWith("data:image")
+            ? `<img src="${a.file}" style="max-width:220px;border-radius:10px;margin-top:10px">`
+            : `<a class="btn sm" href="${a.file}" download>Download File</a>`
+          }
+        ` : ""}
+
+        ${canEdit("announcements") ? `
+          <button class="btn sm" style="margin-top:12px;background:#e74c3c"
+            onclick="deleteAnnouncement('${a.id}')">
+            Delete
+          </button>
+        ` : ""}
+      </li>
+    `);
+  });
+}
+
+if(canEdit("announcements")){
+  document.getElementById("coordForm").innerHTML = `
+    <div class="card" style="margin-bottom:25px;padding:20px">
+      <h4>Post Announcement</h4>
+      <input id="t" placeholder="Title">
+      <textarea id="b" placeholder="Message" rows="3"></textarea>
+      <select id="batchSelect" style="width:100%; padding:10px; margin-top:8px; border:1px solid #ddd; border-radius:6px; font-size:14px;">
+        <option value="All">All Batches</option>
+        <option value="2024">2024 Batch</option>
+        <option value="2025">2025 Batch</option>
+        <option value="2026">2026 Batch</option>
+        <option value="2027">2027 Batch</option>
+      </select>
+      <input type="file" id="f">
+      <button class="btn gold" onclick="post()" style="margin-top:12px">Publish</button>
+    </div>
+  `;
+}
+
+async function post(){
+  const t = document.getElementById("t").value.trim();
+  const b = document.getElementById("b").value.trim();
+  const f = document.getElementById("f").files[0];
+  const batchVal = document.getElementById("batchSelect").value;
+
+  if(!t || !b){ alert("Fill all fields"); return; }
+
+  let fileData = null;
+  if(f) fileData = await fileToDataURL(f);
+
+  await apiCreate(COLLECTION, {
+    title: t,
+    body: b,
+    by: "Coordinator",
+    date: new Date().toLocaleDateString(),
+    file: fileData,
+    batch: batchVal
+  });
+
+  document.getElementById("t").value = "";
+  document.getElementById("b").value = "";
+  document.getElementById("f").value = "";
+
+  await loadAnnouncements();
+  render();
+}
+
+loadAnnouncements().then(render).catch(err => alert(err.message));
+renderFooter();
+</script>
+
+</body>
+</html>

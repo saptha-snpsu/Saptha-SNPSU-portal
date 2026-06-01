@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sports — SAPTHA</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
+<script src="script.js"></script>
+<script>
+const u = requireAuth();
+renderHeader("sports.html");
+</script>
+
+<section>
+<div class="container">
+    <h3>Sports</h3>
+    <p class="lead">Teams, fixtures & registrations.</p>
+
+    <div id="sportsForm"></div>
+    <div class="grid cols-3" id="sportsList"></div>
+</div>
+</section>
+
+<script>
+const COLLECTION = "sports";
+let sportsItems = [];
+
+async function loadData(){
+  const raw = await apiList(COLLECTION);
+  sportsItems = raw.map(item => ({ id: item.id, ...item.data }));
+}
+
+async function delSport(id){
+    if(!confirm("Delete this sport activity?")) return;
+    await apiDelete(COLLECTION, id);
+    await loadData();
+    render();
+}
+
+function render(){
+    const box = document.getElementById("sportsList");
+    box.innerHTML = "";
+
+    const items = sportsItems.slice().reverse();
+
+    items.forEach(s=>{
+        box.insertAdjacentHTML("beforeend",`
+            <div class="card">
+                <h4>${s.sport}</h4>
+                <small>${s.details}</small>
+                <p style="margin-top:8px">${s.extra}</p>
+
+                ${canEdit("sports") ? `
+                    <button onclick="delSport('${s.id}')"
+                        style="margin-top:12px;background:#e53935;color:#fff;border:none;padding:8px 14px;border-radius:6px;cursor:pointer">
+                        Delete
+                    </button>
+                ` : ``}
+            </div>
+        `);
+    });
+}
+
+if(canEdit("sports")){
+    document.getElementById("sportsForm").innerHTML = `
+        <div class="card" style="margin-bottom:20px">
+            <h4>Add Sport Activity</h4>
+
+            <label>Sport Name</label>
+            <input id="sp" placeholder="e.g. Cricket">
+
+            <label>Details</label>
+            <input id="dt" placeholder="Fixture / schedule info">
+
+            <label>Extra Info</label>
+            <textarea id="ex" rows="3" placeholder="Coach / timing / registration"></textarea>
+
+            <button class="btn gold" style="margin-top:10px" onclick="add()">Publish</button>
+        </div>
+    `;
+}
+
+async function add(){
+    const sp = document.getElementById("sp").value.trim();
+    const dt = document.getElementById("dt").value.trim();
+    const ex = document.getElementById("ex").value.trim();
+
+    if(!sp || !dt || !ex){ alert("Fill all fields"); return; }
+
+    await apiCreate(COLLECTION, { sport: sp, details: dt, extra: ex });
+
+    document.getElementById("sp").value="";
+    document.getElementById("dt").value="";
+    document.getElementById("ex").value="";
+
+    await loadData();
+    render();
+}
+
+loadData().then(render).catch(err => alert(err.message));
+renderFooter();
+</script>
+
+</body>
+</html>

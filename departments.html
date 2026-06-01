@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SAPTHA — Departments</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+
+<style>
+/* ===== DEPARTMENTS PAGE DESIGN ===== */
+
+.dept-section{
+    padding:60px 20px;
+    background:linear-gradient(to bottom,#f5f8ff,#ffffff);
+}
+
+.dept-hero{
+    text-align:center;
+    margin-bottom:35px;
+}
+
+.dept-hero h1{
+    font-family:'Fraunces',serif;
+    font-size:38px;
+    color:#0b3d91;
+    margin-bottom:6px;
+}
+
+.dept-hero p{
+    color:#555;
+    font-size:17px;
+}
+
+.back-link{
+    display:inline-block;
+    margin-bottom:20px;
+    color:#0b3d91;
+    text-decoration:none;
+    font-weight:600;
+}
+
+.sem-grid{
+    gap:25px;
+    margin-top:30px;
+}
+
+.sem-card{
+    text-align:center;
+    padding:30px 15px;
+    border-left:6px solid #0b3d91;
+    border-radius:12px;
+    background:#fff;
+    box-shadow:0 10px 25px rgba(0,0,0,0.06);
+    transition:.3s ease;
+    text-decoration:none;
+    color:inherit;
+}
+
+.sem-card:hover{
+    transform:translateY(-8px);
+    background:#0b3d91;
+    color:#fff;
+}
+
+.sem-card .num{
+    font-size:42px;
+    font-weight:bold;
+    margin-bottom:10px;
+}
+
+.sem-card small{
+    color:#666;
+}
+
+.sem-card:hover small{
+    color:#fff;
+}
+</style>
+</head>
+
+<body>
+
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
+<script src="script.js"></script>
+<script>
+const u = requireAuth();
+renderHeader("departments.html");
+</script>
+
+<section class="dept-section">
+<div class="container">
+
+  <a class="back-link" href="home.html">← Back to Home</a>
+
+  <div class="dept-hero">
+      <h1 id="bH">Loading...</h1>
+      <p id="bN">Loading department details...</p>
+  </div>
+
+  <div class="grid cols-4 sem-grid" id="semGrid"></div>
+
+</div>
+</section>
+
+<script>
+/* CS-ONLY FALLBACKS */
+const branch = "CSE";
+let selectedBatch = getEffectiveBatch();
+const branchName = "Computer Science & Engineering";
+
+/* HEADER TEXT */
+document.getElementById("bN").textContent = `${branchName} — select a semester to continue.`;
+document.getElementById("bH").textContent = `${branch} (${selectedBatch})`;
+
+/* SAFE SUBJECT LOOKUP */
+const deptData = {};
+const max = 8;
+
+/* GRID RENDER */
+function renderGrid() {
+    const grid = document.getElementById("semGrid");
+    grid.innerHTML = "";
+    for(let i = 1; i <= max; i++){
+      grid.insertAdjacentHTML("beforeend", `
+        <a class="sem-card" href="semester.html?sem=${i}">
+          <div class="num">${i}</div>
+          <h4>Semester ${i}</h4>
+          <small>View Subjects</small>
+        </a>
+      `);
+    }
+}
+
+renderGrid();
+
+renderFooter();
+</script>
+
+</body>
+</html>

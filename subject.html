@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SAPTHA — Subject</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.add-btn{
+  position:fixed;
+  top:90px;
+  right:20px;
+  width:55px;
+  height:55px;
+  border-radius:50%;
+  background:gold;
+  border:none;
+  font-size:30px;
+  font-weight:bold;
+  cursor:pointer;
+  z-index:99999;
+  box-shadow:0 4px 12px rgba(0,0,0,0.25);
+}
+</style>
+</head>
+
+<body>
+
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
+<script src="script.js"></script>
+<script>
+const u = requireAuth();
+renderHeader("departments.html");
+</script>
+
+<section>
+<div class="container">
+
+  <a class="back-link" id="back">← Back</a>
+
+  <div class="profile-banner">
+    <div class="avatar" id="subAv">SN</div>
+    <div style="flex:1">
+      <h3 id="subT">—</h3>
+      <small id="subM">—</small>
+    </div>
+    <span class="tag" id="roleTag">Student</span>
+  </div>
+
+  <div class="grid cols-2" id="mods"></div>
+
+</div>
+</section>
+
+<script>
+const q = new URLSearchParams(location.search);
+const sem = q.get("sem") || "1";
+const subject = q.get("s") || "Subject";
+const selectedBatch = getEffectiveBatch();
+
+document.getElementById("back").href = `semester.html?sem=${sem}`;
+document.getElementById("subT").textContent = subject;
+document.getElementById("subM").textContent = `CSE · Semester ${sem} (${selectedBatch} Batch)`;
+document.getElementById("subAv").textContent = subject.substring(0,2).toUpperCase();
+document.getElementById("roleTag").textContent = roleLabel(u.role);
+
+const moduleScope = `CSE_${sem}_${subject}`;
+let modules = [];
+let subjectFiles = [];
+
+function fileToBase64(file){
+  return new Promise((res,rej)=>{
+    const r = new FileReader();
+    r.onload = ()=>res(r.result);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+async function loadSubjectData(){
+  const rawMods = await apiList("modules", moduleScope);
+  modules = rawMods.map(item => ({ id: item.id, ...item.data }));
+
+  const rawFiles = await apiList("module_files", moduleScope);
+  subjectFiles = rawFiles.map(item => ({ id: item.id, ...item.data }));
+}
+
+async function render(){
+  const box = document.getElementById("mods");
+  box.innerHTML = "";
+
+  if(modules.length === 0){
+    box.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;background:#fff;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.05);">
+      <h4 style="color:#0b3d91;margin-bottom:10px;">No materials added yet!</h4>
+      <p style="color:#666;">Click the gold <b>+</b> button to create a Module/Unit first.</p>
+    </div>`;
+    return;
+  }
+
+  modules.forEach(m => {
+    const related = subjectFiles.filter(f => f.moduleId === m.id);
+
+    box.insertAdjacentHTML("beforeend",`
+      <div class="card" style="padding:20px;">
+        <h4 style="color:#0b3d91;font-size:18px;margin-bottom:6px;">${m.title}</h4>
+        <p style="color:#555;font-size:14px;margin-bottom:15px;">${m.desc || ""}</p>
+
+        ${canEdit("departments") ? `
+          <div style="padding:12px;background:#f0f4f8;border-radius:8px;border:1px dashed #b0c4de;">
+            <strong style="display:block;margin-bottom:8px;color:#0b3d91;font-size:13px;">Upload Material (PDF, PPT, Notes)</strong>
+            <label for="f_${m.id}" class="btn sm gold" style="font-weight:600;cursor:pointer;display:inline-block;margin:0;">Browse Documents</label>
+            <input type="file" id="f_${m.id}" accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.rtf" style="display:none;" onchange="upload('${m.id}')">
+            <button class="btn sm" style="background:transparent;color:#c62828;border:1px solid #c62828;float:right;" onclick="deleteModule('${m.id}')">Delete Unit</button>
+          </div>
+        ` : ""}
+
+        <ul style="margin-top:15px;padding-left:0;list-style:none;">
+          ${related.map(f=>`
+            <li style="margin-bottom:8px;padding:12px;background:#fff;border:1px solid #eee;border-radius:8px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 5px rgba(0,0,0,0.02);">
+              <span style="font-weight:500;font-size:14px;color:#333;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:60%;" title="${f.name}">📄 ${f.name}</span>
+              <div style="display:flex;gap:8px;">
+                <button class="btn sm" style="background:#0b3d91;color:#fff;" onclick="download('${f.id}')">Download</button>
+                ${canEdit("departments") ? `<button class="btn sm" style="background:#ffebee;color:#c62828;border:none;" onclick="removeFile('${f.id}')">Delete</button>` : ""}
+              </div>
+            </li>
+          `).join("")}
+        </ul>
+      </div>
+    `);
+  });
+}
+
+async function addModule(){
+  const name = prompt("Enter Unit or Chapter title (e.g. 'Unit 1: Introduction'):");
+  if(!name) return;
+  const desc = prompt("Short description (optional):") || "";
+  await apiCreate("modules", {
+    scope: moduleScope,
+    branch: "CSE",
+    sem,
+    subject,
+    title: name,
+    desc
+  });
+  await loadSubjectData();
+  render();
+}
+
+async function upload(moduleId){
+  const file = document.getElementById("f_"+moduleId).files[0];
+  if(!file) return alert("Select file");
+  if(file.size > 8 * 1024 * 1024) return alert("Max 8MB");
+  await apiCreate("module_files", {
+    scope: moduleScope,
+    name: file.name,
+    size: file.size,
+    data: await fileToBase64(file),
+    moduleId,
+    subject,
+    date: new Date().toLocaleDateString()
+  });
+  await loadSubjectData();
+  render();
+}
+
+async function download(id){
+  const f = subjectFiles.find(x => x.id === id);
+  if(!f) return alert("File not found");
+  const a = document.createElement("a");
+  a.href = f.data;
+  a.download = f.name;
+  a.click();
+}
+
+async function removeFile(id){
+  if(!confirm("Delete this file?")) return;
+  await apiDelete("module_files", id);
+  await loadSubjectData();
+  render();
+}
+
+async function deleteModule(id){
+  if(!confirm("Delete this module and all its files?")) return;
+  await apiDelete("modules", id);
+  const related = subjectFiles.filter(f => f.moduleId === id);
+  await Promise.all(related.map(f => apiDelete("module_files", f.id)));
+  await loadSubjectData();
+  render();
+}
+
+if(canEdit("departments")){
+  const b = document.createElement("button");
+  b.className = "add-btn";
+  b.innerHTML = "+";
+  b.onclick = addModule;
+  document.body.appendChild(b);
+}
+
+loadSubjectData().then(render).catch(err => alert(err.message));
+renderFooter();
+</script>
+
+</body>
+</html>
