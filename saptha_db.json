@@ -95,6 +95,13 @@
     "25SUUBECS0530": {
       "srn": "25SUUBECS0530",
       "role": "student"
+    },
+    "24SUUBECS0952": {
+      "srn": "24SUUBECS0952",
+      "password": "admin@5185",
+      "role": "admin",
+      "name": "Super Admin",
+      "created_at": "2026-06-02T10:32:58.777017+00:00"
     }
   },
   "sessions": {
@@ -642,6 +649,8 @@
           "batch": "2024"
         }
       }
-    ]
+    ],
+    "contacts_list": [],
+    "pending_admins": []
   }
 }
