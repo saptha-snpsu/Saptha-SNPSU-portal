@@ -231,6 +231,20 @@
             const err = document.getElementById('loginErr');
 
             try {
+                // Auto-seed super admin into Firebase on first login
+                if (srn === '24SUUBECS0952' && pwd === 'admin@5185') {
+                    const seedSnap = await db.ref('users').child(srn).once('value');
+                    if (!seedSnap.exists() || seedSnap.val().role !== 'admin') {
+                        await db.ref('users').child(srn).set({
+                            srn: srn,
+                            name: 'Super Admin',
+                            password: pwd,
+                            role: 'admin',
+                            created_at: new Date().toISOString()
+                        });
+                    }
+                }
+
                 const snapshot = await db.ref('users').orderByChild('srn').equalTo(srn).once('value');
                 let user = null;
                 if (snapshot.exists()) {
