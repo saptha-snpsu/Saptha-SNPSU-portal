@@ -172,6 +172,12 @@
                 <li onclick="switchTab('hostel_info', this)">Hostel Info</li>
                 <li onclick="switchTab('canteen_info', this)">Canteen Info</li>
                 <li onclick="switchTab('placements', this)">Placements</li>
+                <li onclick="switchTab('sports', this)">Sports</li>
+                <li onclick="switchTab('activity_announcements', this)">DSA Announcements</li>
+                <li onclick="switchTab('hrd_programs', this)">HRD Programs</li>
+                <li onclick="switchTab('subjects', this)">Subjects</li>
+                <li onclick="switchTab('modules', this)">Modules</li>
+                <li onclick="switchTab('module_files', this)">Module Files</li>
             </ul>
             <div class="logout-btn" onclick="logout()">Logout</div>
         </div>
@@ -264,6 +270,15 @@
             }
         });
 
+        function fileToBase64(file){
+            return new Promise((res,rej)=>{
+                const r = new FileReader();
+                r.onload = ()=>res(r.result);
+                r.onerror = rej;
+                r.readAsDataURL(file);
+            });
+        }
+
         // Register Logic (Pending Admin)
         document.getElementById('registerForm').addEventListener('submit', async e => {
             e.preventDefault();
@@ -274,9 +289,24 @@
             const succ = document.getElementById('regSucc');
 
             try {
-                // check if already user
-                const snapshot = await db.ref('users').orderByChild('srn').equalTo(srn).once('value');
-                if (snapshot.exists()) throw new Error("SRN already exists in system.");
+                // check if already an admin in users
+                const userSnap = await db.ref('users').child(srn).once('value');
+                if (userSnap.exists() && userSnap.val().role === 'admin') {
+                    throw new Error("SRN is already registered as an Admin.");
+                }
+
+                // check if already pending admin request
+                const pendingSnap = await db.ref('pending_admins').once('value');
+                let alreadyPending = false;
+                pendingSnap.forEach(child => {
+                    const data = child.val().data || child.val();
+                    if (data && data.srn === srn) {
+                        alreadyPending = true;
+                    }
+                });
+                if (alreadyPending) {
+                    throw new Error("An admin request for this SRN is already pending approval.");
+                }
 
                 await apiCreate('pending_admins', { srn, name, password: pwd });
                 succ.style.display = 'block';
@@ -369,6 +399,60 @@
             'placements': {
                 fields: ['title', 'desc'], add: true,
                 inputs: [{id: 'ptitle', field: 'title', label: 'Company/Title'}, {id: 'pdesc', field: 'desc', label: 'Details'}]
+            },
+            'sports': {
+                fields: ['sport', 'details', 'extra'], add: true,
+                inputs: [
+                    { id: 'spsport', field: 'sport', label: 'Sport Name' },
+                    { id: 'spdetails', field: 'details', label: 'Details (Fixture / Schedule)' },
+                    { id: 'spextra', field: 'extra', label: 'Extra Info' }
+                ]
+            },
+            'activity_announcements': {
+                fields: ['title', 'body', 'by', 'date'], add: true,
+                inputs: [
+                    { id: 'dsatitle', field: 'title', label: 'Title (e.g. Photography)' },
+                    { id: 'dsabody', field: 'body', label: 'Message' },
+                    { id: 'dsaby', field: 'by', label: 'Posted By (e.g. Coordinator)' }
+                ]
+            },
+            'hrd_programs': {
+                fields: ['title', 'schedule', 'desc', 'status'], add: true,
+                inputs: [
+                    { id: 'hrdtitle', field: 'title', label: 'Program Title' },
+                    { id: 'hrdschedule', field: 'schedule', label: 'Schedule' },
+                    { id: 'hrddesc', field: 'desc', label: 'Description' },
+                    { id: 'hrdstatus', field: 'status', label: 'Status (Upcoming/Ongoing/Archive)' }
+                ]
+            },
+            'subjects': {
+                fields: ['name', 'scope', 'branch', 'desc'], add: true,
+                inputs: [
+                    { id: 'subname', field: 'name', label: 'Subject Name' },
+                    { id: 'subscope', field: 'scope', label: 'Scope (e.g. CSE_1)' },
+                    { id: 'subbranch', field: 'branch', label: 'Branch (default CSE)' },
+                    { id: 'subdesc', field: 'desc', label: 'Description' }
+                ]
+            },
+            'modules': {
+                fields: ['title', 'subject', 'sem', 'branch', 'scope', 'desc'], add: true,
+                inputs: [
+                    { id: 'modtitle', field: 'title', label: 'Module Title' },
+                    { id: 'modsubject', field: 'subject', label: 'Subject Name' },
+                    { id: 'modsem', field: 'sem', label: 'Semester (e.g. 1)' },
+                    { id: 'modbranch', field: 'branch', label: 'Branch (default CSE)' },
+                    { id: 'modscope', field: 'scope', label: 'Scope (e.g. CSE_1)' },
+                    { id: 'moddesc', field: 'desc', label: 'Description' }
+                ]
+            },
+            'module_files': {
+                fields: ['name', 'subject', 'date'], add: true,
+                inputs: [
+                    { id: 'file_input', field: 'file_input', label: 'Select File', type: 'file' },
+                    { id: 'filesubject', field: 'subject', label: 'Subject Name' },
+                    { id: 'filescope', field: 'scope', label: 'Scope (e.g. CSE_1)' },
+                    { id: 'filemodtitle', field: 'module_title', label: 'Module/Unit Title' }
+                ]
             }
         };
 
@@ -383,12 +467,22 @@
             if (schema.add) {
                 addContainer.style.display = 'block';
                 schema.inputs.forEach(inp => {
-                    inputsDiv.innerHTML += `
-                        <div class="input-group">
-                            <label>${inp.label}</label>
-                            <input type="text" id="add_${inp.id}">
-                        </div>
-                    `;
+                    const inputType = inp.type || 'text';
+                    if (inputType === 'file') {
+                        inputsDiv.innerHTML += `
+                            <div class="input-group">
+                                <label>${inp.label}</label>
+                                <input type="file" id="add_${inp.id}" accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.rtf,.png,.jpg,.jpeg">
+                            </div>
+                        `;
+                    } else {
+                        inputsDiv.innerHTML += `
+                            <div class="input-group">
+                                <label>${inp.label}</label>
+                                <input type="text" id="add_${inp.id}">
+                            </div>
+                        `;
+                    }
                 });
             } else {
                 addContainer.style.display = 'none';
@@ -464,15 +558,62 @@
                 payload.by = document.getElementById('add_aby').value;
                 await apiCreate('announcements', payload);
             }
+            else if (currentCollection === 'module_files') {
+                const fileEl = document.getElementById('add_file_input');
+                const file = fileEl ? fileEl.files[0] : null;
+                const subjectName = document.getElementById('add_filesubject').value.trim();
+                const scope = document.getElementById('add_filescope').value.trim();
+                const modTitle = document.getElementById('add_filemodtitle').value.trim();
+
+                if (!file || !subjectName || !scope || !modTitle) {
+                    return alert("Please select a file and fill all fields.");
+                }
+                
+                // Find or create module for this subject
+                const modulesSnap = await db.ref('modules').once('value');
+                let moduleId = null;
+                modulesSnap.forEach(c => {
+                    const m = c.val().data || c.val();
+                    if (m && m.title === modTitle && m.subject === subjectName && m.scope === scope) {
+                        moduleId = c.key;
+                    }
+                });
+
+                if (!moduleId) {
+                    const newMod = await apiCreate('modules', {
+                        title: modTitle,
+                        subject: subjectName,
+                        scope: scope,
+                        sem: scope.split('_')[1] || "1",
+                        branch: "CSE",
+                        desc: "Created during file upload"
+                    });
+                    moduleId = newMod.id;
+                }
+
+                await apiCreate('module_files', {
+                    scope: scope,
+                    name: file.name,
+                    size: file.size,
+                    data: await fileToBase64(file),
+                    moduleId: moduleId,
+                    subject: subjectName,
+                    date: new Date().toLocaleDateString()
+                });
+            }
             else {
                 // generic fallback
                 schema.inputs.forEach(inp => {
-                    payload[inp.field || inp.id] = document.getElementById('add_'+inp.id).value;
+                    const val = document.getElementById('add_'+inp.id).value;
+                    payload[inp.field || inp.id] = val;
                 });
                 await apiCreate(currentCollection, payload);
             }
 
-            schema.inputs.forEach(inp => document.getElementById('add_'+inp.id).value = '');
+            schema.inputs.forEach(inp => {
+                const el = document.getElementById('add_'+inp.id);
+                if (el) el.value = '';
+            });
             loadCollection(currentCollection);
         }
 

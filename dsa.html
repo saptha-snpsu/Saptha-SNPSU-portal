@@ -147,69 +147,12 @@ function render(){
             : `<a href="${a.file}" download class="btn">Download Attachment</a>`
           }
         ` : ``}
-
-        ${canEdit("dsa") ? `
-          <button onclick="delItem('${a.id}')"
-            style="margin-top:10px;background:#e53935;color:#fff;border:none;padding:8px 14px;border-radius:6px;cursor:pointer">
-            Delete
-          </button>
-        ` : ``}
       </li>
     `);
   });
 }
 
-if(canEdit("dsa")){
-  document.getElementById("coordForm").innerHTML = `
-    <div class="card" style="margin-bottom:22px;padding:20px">
-      <h4>Post Activity Update</h4>
 
-      <label>Title (Activity)</label>
-      <select id="t">
-        <option>Art and Sketch</option>
-        <option>Anchoring</option>
-        <option>Photography</option>
-        <option>Dance</option>
-        <option>Music</option>
-        <option>Theatre</option>
-        <option>Kannada Culture</option>
-        <option>Fashion Vibes</option>
-      </select>
-
-      <label>Message</label>
-      <textarea id="b" rows="3" placeholder="Message..."></textarea>
-
-      <label>Attach File (PDF/Image)</label>
-      <input type="file" id="f">
-
-      <button class="btn gold" style="margin-top:12px" onclick="post()">Publish</button>
-    </div>`;
-}
-
-async function post(){
-  const t = document.getElementById("t").value;
-  const b = document.getElementById("b").value.trim();
-  const f = document.getElementById("f").files[0];
-
-  if(!b){ alert("Enter message"); return; }
-
-  let fileData = null;
-  if(f) fileData = await fileToBase64(f);
-
-  await apiCreate(COLLECTION, {
-    title: t,
-    body: b,
-    by: "Coordinator",
-    date: new Date().toLocaleDateString(),
-    file: fileData
-  });
-
-  document.getElementById("b").value="";
-  document.getElementById("f").value="";
-
-  await loadItems();
-  render();
-}
 
 loadItems().then(render).catch(err => alert(err.message));
 renderFooter();

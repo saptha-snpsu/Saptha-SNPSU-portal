@@ -164,51 +164,8 @@ function renderCanteen(){
     document.getElementById("canteenContact").textContent = info.contact;
 }
 
-if(canEdit("canteen")){
-    document.getElementById("canteenEditForm").innerHTML = `
-        <div class="contact-card" style="margin:0 0 25px">
-            <h4>Edit Canteen Details</h4>
-            <label>Menu</label>
-            <textarea id="cmenu" rows="12"></textarea>
-            <label>Contact Details</label>
-            <input id="ccontact">
-            <button class="btn gold" style="margin-top:10px" onclick="saveCanteenInfo()">Save Details</button>
-            <div id="canteenSaveStatus" style="font-size:13px;margin-top:8px"></div>
-        </div>`;
-}
-
-function fillCanteenForm(){
-    if(!canEdit("canteen")) return;
-    const info = canteenInfo || DEFAULT_CANTEEN_INFO;
-    document.getElementById("cmenu").value = info.menu;
-    document.getElementById("ccontact").value = info.contact;
-}
-
-async function saveCanteenInfo(){
-    const menu = document.getElementById("cmenu").value.trim();
-    const contact = document.getElementById("ccontact").value.trim();
-    const status = document.getElementById("canteenSaveStatus");
-
-    if(!menu || !contact){ alert("Fill menu and contact details"); return; }
-
-    try{
-        status.style.color = "#555";
-        status.textContent = "Saving...";
-        await apiCreate(INFO_COLLECTION, {menu, contact});
-        await loadCanteenInfo();
-        renderCanteen();
-        fillCanteenForm();
-        status.style.color = "green";
-        status.textContent = "Saved.";
-    }catch(err){
-        status.style.color = "#e74c3c";
-        status.textContent = err.message;
-    }
-}
-
 loadCanteenInfo().then(()=>{
     renderCanteen();
-    fillCanteenForm();
 }).catch(err => alert(err.message));
 
 renderFooter();

@@ -56,52 +56,9 @@ function render(){
                 <h4>${s.sport}</h4>
                 <small>${s.details}</small>
                 <p style="margin-top:8px">${s.extra}</p>
-
-                ${canEdit("sports") ? `
-                    <button onclick="delSport('${s.id}')"
-                        style="margin-top:12px;background:#e53935;color:#fff;border:none;padding:8px 14px;border-radius:6px;cursor:pointer">
-                        Delete
-                    </button>
-                ` : ``}
             </div>
         `);
     });
-}
-
-if(canEdit("sports")){
-    document.getElementById("sportsForm").innerHTML = `
-        <div class="card" style="margin-bottom:20px">
-            <h4>Add Sport Activity</h4>
-
-            <label>Sport Name</label>
-            <input id="sp" placeholder="e.g. Cricket">
-
-            <label>Details</label>
-            <input id="dt" placeholder="Fixture / schedule info">
-
-            <label>Extra Info</label>
-            <textarea id="ex" rows="3" placeholder="Coach / timing / registration"></textarea>
-
-            <button class="btn gold" style="margin-top:10px" onclick="add()">Publish</button>
-        </div>
-    `;
-}
-
-async function add(){
-    const sp = document.getElementById("sp").value.trim();
-    const dt = document.getElementById("dt").value.trim();
-    const ex = document.getElementById("ex").value.trim();
-
-    if(!sp || !dt || !ex){ alert("Fill all fields"); return; }
-
-    await apiCreate(COLLECTION, { sport: sp, details: dt, extra: ex });
-
-    document.getElementById("sp").value="";
-    document.getElementById("dt").value="";
-    document.getElementById("ex").value="";
-
-    await loadData();
-    render();
 }
 
 loadData().then(render).catch(err => alert(err.message));

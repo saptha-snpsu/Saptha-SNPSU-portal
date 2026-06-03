@@ -73,12 +73,7 @@ async function loadSubjects(){
     }));
 }
 
-async function deleteSubject(id){
-    if(!confirm("Delete this subject?")) return;
-    await apiDelete(COLLECTION, id);
-    await loadSubjects();
-    render();
-}
+
 
 function render(){
     const grid = document.getElementById("sGrid");
@@ -97,39 +92,12 @@ function render(){
                     <h4>${s.name}</h4>
                     <small>${s.desc || "Click to view modules & notes"}</small>
                 </a>
-                ${canEdit("departments") ? `
-                  <button class="btn sm" style="margin-top:10px;background:#e74c3c"
-                    onclick="deleteSubject('${s.id}')">
-                    Delete
-                  </button>
-                ` : ""}
             </div>
         `);
     });
 }
 
-async function addSubject(){
-    const name = prompt("Enter subject name:");
-    if(!name) return;
-    const desc = prompt("Enter description (optional):");
-    await apiCreate(COLLECTION, {
-        scope,
-        branch,
-        sem,
-        name,
-        desc: desc || ""
-    });
-    await loadSubjects();
-    render();
-}
 
-if(canEdit("departments")){
-    const btn = document.createElement("button");
-    btn.className = "add-btn";
-    btn.innerHTML = "+";
-    btn.onclick = addSubject;
-    document.body.appendChild(btn);
-}
 
 loadSubjects().then(render).catch(err => alert(err.message));
 renderFooter();

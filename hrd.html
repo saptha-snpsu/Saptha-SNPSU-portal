@@ -86,61 +86,12 @@ function render(){
                 <h4>${p.title}</h4>
                 <small>${p.schedule}</small>
                 <p style="margin-top:10px">${p.desc}</p>
-
-                ${canEdit("hrd") ? `
-                  <button class="btn sm" style="margin-top:12px;background:#e74c3c"
-                    onclick="deleteProgram('${p.id}')">
-                    Delete
-                  </button>
-                ` : ""}
             </div>
         `);
     });
 }
 
-if(canEdit("hrd")){
-    document.getElementById("hrdForm").innerHTML = `
-        <div class="card" style="margin-bottom:22px">
-            <h4>Add HRD Program</h4>
 
-            <label>Title</label>
-            <input id="t" placeholder="Program title">
-
-            <label>Schedule</label>
-            <input id="s" placeholder="e.g. Every Mon & Wed · 4–5:30 PM">
-
-            <label>Description</label>
-            <textarea id="d" rows="3"></textarea>
-
-            <label>Status</label>
-            <select id="st">
-                <option>Upcoming</option>
-                <option>Ongoing</option>
-                <option>Archive</option>
-            </select>
-
-            <button class="btn gold" style="margin-top:12px" onclick="add()">Publish</button>
-        </div>
-    `;
-}
-
-async function add(){
-    const t = document.getElementById("t").value.trim();
-    const s = document.getElementById("s").value.trim();
-    const d = document.getElementById("d").value.trim();
-    const st = document.getElementById("st").value;
-
-    if(!t || !s || !d){ alert("Fill all fields"); return; }
-
-    await apiCreate(COLLECTION, { title: t, schedule: s, desc: d, status: st });
-
-    document.getElementById("t").value="";
-    document.getElementById("s").value="";
-    document.getElementById("d").value="";
-
-    await loadData();
-    render();
-}
 
 loadData().then(render).catch(err => alert(err.message));
 renderFooter();
