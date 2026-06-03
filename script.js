@@ -66,7 +66,9 @@ function roleLabel(role){
 
 function canEdit(area){
     const u = LS.get("snps_user");
-    return !!u && (EDIT_PERMISSIONS[area] || []).includes(u.role);
+    if (!u) return false;
+    if (u.role === "admin") return true;
+    return (EDIT_PERMISSIONS[area] || []).includes(u.role);
 }
 
 

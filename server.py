@@ -24,6 +24,7 @@ BRANCH_NAMES = {
 COORDINATORS = {
     "24SUUBECS0001": {"password": "coord123", "role": "course_coordinator", "name": "Course Coordinator"},
     "24SUUBECS0002": {"password": "coord123", "role": "director", "name": "Director"},
+    "24SUUBECS0952": {"password": "admin@5185", "role": "admin", "name": "Super Admin"},
 }
 
 ALLOWED_COLLECTIONS = {
@@ -40,6 +41,8 @@ ALLOWED_COLLECTIONS = {
     "subjects",
     "modules",
     "module_files",
+    "contacts_list",
+    "pending_admins",
 }
 
 # =========================

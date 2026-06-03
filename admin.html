@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAPTHA Admin Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0b3d91;
+            --accent: #d4af37;
+            --bg: #f4f6fb;
+            --text: #333;
+            --border: #e0e0e0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        h1, h2, h3, h4 { font-family: 'Fraunces', serif; color: var(--primary); margin: 0; }
+
+        /* Auth Gateway */
+        #authGateway {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--bg);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 1000;
+        }
+
+        .auth-card {
+            background: white; padding: 40px; border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            width: 350px; text-align: center;
+        }
+
+        .auth-card img { width: 80px; margin-bottom: 20px; }
+        
+        .input-group { margin: 15px 0; text-align: left; }
+        .input-group label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 5px; color: #666; }
+        .input-group input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+
+        .btn {
+            background: var(--primary); color: white; border: none; padding: 12px; width: 100%;
+            border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.3s;
+        }
+        .btn:hover { background: #082d6b; }
+        .btn.outline { background: transparent; color: var(--primary); border: 1px solid var(--primary); margin-top: 10px; }
+        .btn.outline:hover { background: #f0f4fa; }
+
+        .error { color: #d32f2f; font-size: 13px; margin-top: 10px; display: none; }
+        .success { color: #2e7d32; font-size: 13px; margin-top: 10px; display: none; }
+
+        /* Dashboard Layout */
+        #dashboard { display: none; width: 100%; height: 100%; flex-direction: row; }
+
+        .sidebar {
+            width: 250px; background: white; border-right: 1px solid var(--border);
+            display: flex; flex-direction: column;
+        }
+        
+        .sidebar-header {
+            padding: 20px; text-align: center; border-bottom: 1px solid var(--border);
+        }
+        .sidebar-header img { width: 60px; }
+        .sidebar-header h2 { font-size: 20px; margin-top: 10px; }
+
+        .nav-links { flex: 1; overflow-y: auto; padding: 10px 0; list-style: none; margin: 0; }
+        .nav-links li { padding: 12px 20px; cursor: pointer; color: #555; font-weight: 500; border-left: 4px solid transparent; }
+        .nav-links li:hover { background: #f9f9f9; color: var(--primary); }
+        .nav-links li.active { border-left-color: var(--accent); color: var(--primary); background: #f4f6fb; font-weight: bold; }
+
+        .logout-btn {
+            padding: 15px 20px; cursor: pointer; color: #d32f2f; font-weight: bold;
+            border-top: 1px solid var(--border); text-align: center;
+        }
+        .logout-btn:hover { background: #fef4f4; }
+
+        .main-content {
+            flex: 1; padding: 30px; overflow-y: auto;
+        }
+        
+        .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        
+        /* Data Tables */
+        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-bottom: 20px; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
+        th { background: #f9f9f9; color: #555; font-weight: 600; }
+        
+        .action-btn { padding: 6px 12px; border-radius: 4px; cursor: pointer; border: none; font-size: 12px; font-weight: bold; }
+        .btn-approve { background: #e8f5e9; color: #2e7d32; }
+        .btn-delete { background: #ffebee; color: #c62828; }
+        
+        /* Forms */
+        .form-row { display: flex; gap: 15px; margin-bottom: 15px; align-items: flex-end; }
+        .form-row .input-group { margin: 0; flex: 1; }
+
+    </style>
+</head>
+<body>
+
+    <!-- Authentication Gateway -->
+    <div id="authGateway">
+        <!-- Login Form -->
+        <div class="auth-card" id="loginCard">
+            <img src="logo.jpg" alt="Logo">
+            <h2>Admin Portal</h2>
+            <p style="font-size: 13px; color: #777; margin-bottom: 20px;">Restricted Access</p>
+            
+            <form id="loginForm">
+                <div class="input-group">
+                    <label>Admin SRN</label>
+                    <input type="text" id="loginSrn" required>
+                </div>
+                <div class="input-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPwd" required>
+                </div>
+                <button type="submit" class="btn">Login</button>
+                <div id="loginErr" class="error"></div>
+            </form>
+            <button class="btn outline" onclick="showRegister()">Request Admin Access</button>
+        </div>
+
+        <!-- Register Form -->
+        <div class="auth-card" id="registerCard" style="display: none;">
+            <img src="logo.jpg" alt="Logo">
+            <h2>Request Access</h2>
+            <form id="registerForm">
+                <div class="input-group">
+                    <label>Your Name</label>
+                    <input type="text" id="regName" required>
+                </div>
+                <div class="input-group">
+                    <label>Your SRN</label>
+                    <input type="text" id="regSrn" required>
+                </div>
+                <div class="input-group">
+                    <label>Desired Password</label>
+                    <input type="password" id="regPwd" required>
+                </div>
+                <button type="submit" class="btn">Submit Request</button>
+                <div id="regErr" class="error"></div>
+                <div id="regSucc" class="success">Request submitted! Waiting for approval.</div>
+            </form>
+            <button class="btn outline" onclick="showLogin()">Back to Login</button>
+        </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="dashboard">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <img src="logo.jpg" alt="Logo">
+                <h2>SAPTHA</h2>
+            </div>
+            <ul class="nav-links">
+                <li class="active" onclick="switchTab('pending_admins', this)">Pending Admins</li>
+                <li onclick="switchTab('users', this)">User Management</li>
+                <li onclick="switchTab('contacts_list', this)">Developers (Contact Us)</li>
+                <li onclick="switchTab('library', this)">E-Library</li>
+                <li onclick="switchTab('announcements', this)">Announcements</li>
+                <li onclick="switchTab('events', this)">Events</li>
+                <li onclick="switchTab('hostel_info', this)">Hostel Info</li>
+                <li onclick="switchTab('canteen_info', this)">Canteen Info</li>
+                <li onclick="switchTab('placements', this)">Placements</li>
+            </ul>
+            <div class="logout-btn" onclick="logout()">Logout</div>
+        </div>
+        
+        <div class="main-content">
+            <div class="header-bar">
+                <h2 id="pageTitle">Pending Admins</h2>
+                <div style="font-size: 14px; font-weight: bold; color: var(--primary);">
+                    Logged in as: <span id="currentUserLabel"></span>
+                </div>
+            </div>
+
+            <!-- Generic CRUD Container -->
+            <div class="card" id="crudContainer">
+                <h4 style="margin-bottom: 15px;">Add New Record</h4>
+                <div class="form-row" id="addFormInputs">
+                    <!-- Dynamic Inputs injected here -->
+                </div>
+                <button class="btn" style="width: auto;" onclick="addRecord()">Add Record</button>
+            </div>
+
+            <div class="card">
+                <h4>Existing Records</h4>
+                <table>
+                    <thead id="tableHead">
+                        <!-- Dynamic Head -->
+                    </thead>
+                    <tbody id="tableBody">
+                        <!-- Dynamic Rows -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
+    <script src="script.js"></script>
+    <script>
+        let currentAdmin = null;
+        let currentCollection = 'pending_admins';
+
+        function showRegister() {
+            document.getElementById('loginCard').style.display = 'none';
+            document.getElementById('registerCard').style.display = 'block';
+        }
+        function showLogin() {
+            document.getElementById('registerCard').style.display = 'none';
+            document.getElementById('loginCard').style.display = 'block';
+        }
+
+        // Login Logic
+        document.getElementById('loginForm').addEventListener('submit', async e => {
+            e.preventDefault();
+            const srn = document.getElementById('loginSrn').value.trim().toUpperCase();
+            const pwd = document.getElementById('loginPwd').value;
+            const err = document.getElementById('loginErr');
+
+            try {
+                // Auto-seed super admin into Firebase on first login
+                if (srn === '24SUUBECS0952' && pwd === 'admin@5185') {
+                    const seedSnap = await db.ref('users').child(srn).once('value');
+                    if (!seedSnap.exists() || seedSnap.val().role !== 'admin') {
+                        await db.ref('users').child(srn).set({
+                            srn: srn,
+                            name: 'Super Admin',
+                            password: pwd,
+                            role: 'admin',
+                            created_at: new Date().toISOString()
+                        });
+                    }
+                }
+
+                const snapshot = await db.ref('users').orderByChild('srn').equalTo(srn).once('value');
+                let user = null;
+                if (snapshot.exists()) {
+                    snapshot.forEach(c => { user = { id: c.key, ...c.val() }; });
+                }
+
+                if (!user || user.password !== pwd || user.role !== 'admin') {
+                    throw new Error("Invalid admin credentials.");
+                }
+
+                currentAdmin = user;
+                localStorage.setItem("snps_user", JSON.stringify(user));
+                initDashboard();
+            } catch(ex) {
+                err.textContent = ex.message;
+                err.style.display = 'block';
+            }
+        });
+
+        // Register Logic (Pending Admin)
+        document.getElementById('registerForm').addEventListener('submit', async e => {
+            e.preventDefault();
+            const name = document.getElementById('regName').value.trim();
+            const srn = document.getElementById('regSrn').value.trim().toUpperCase();
+            const pwd = document.getElementById('regPwd').value;
+            const err = document.getElementById('regErr');
+            const succ = document.getElementById('regSucc');
+
+            try {
+                // check if already user
+                const snapshot = await db.ref('users').orderByChild('srn').equalTo(srn).once('value');
+                if (snapshot.exists()) throw new Error("SRN already exists in system.");
+
+                await apiCreate('pending_admins', { srn, name, password: pwd });
+                succ.style.display = 'block';
+                err.style.display = 'none';
+                setTimeout(showLogin, 3000);
+            } catch(ex) {
+                err.textContent = ex.message;
+                err.style.display = 'block';
+                succ.style.display = 'none';
+            }
+        });
+
+        function logout() {
+            localStorage.removeItem("snps_user");
+            window.location.reload();
+        }
+
+        // Dashboard Initialization
+        function initDashboard() {
+            const u = LS.get("snps_user");
+            if (u && u.role === 'admin') {
+                currentAdmin = u;
+                document.getElementById('authGateway').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'flex';
+                document.getElementById('currentUserLabel').textContent = u.name || u.srn;
+                loadCollection(currentCollection);
+            }
+        }
+
+        function switchTab(collection, el) {
+            document.querySelectorAll('.nav-links li').forEach(li => li.classList.remove('active'));
+            el.classList.add('active');
+            currentCollection = collection;
+            document.getElementById('pageTitle').textContent = el.textContent;
+            loadCollection(collection);
+        }
+
+        // Schema for generic form generation
+        const schemas = {
+            'pending_admins': { fields: ['srn', 'name'], add: false },
+            'users': { 
+                fields: ['srn', 'name', 'role'], 
+                add: true, 
+                inputs: [
+                    { id: 'usrn', field: 'srn', label: 'SRN' },
+                    { id: 'uname', field: 'name', label: 'Name' },
+                    { id: 'urole', field: 'role', label: 'Role (e.g. director, admin, student)' },
+                    { id: 'upwd', field: 'password', label: 'Password (if coord)' }
+                ] 
+            },
+            'contacts_list': {
+                fields: ['name', 'email', 'phone'],
+                add: true,
+                inputs: [
+                    { id: 'cname', field: 'name', label: 'Name' },
+                    { id: 'cemail', field: 'email', label: 'Email' },
+                    { id: 'cphone', field: 'phone', label: 'Phone' }
+                ]
+            },
+            'library': {
+                fields: ['title', 'author', 'link'],
+                add: true,
+                inputs: [
+                    { id: 'btitle', field: 'title', label: 'Book Title' },
+                    { id: 'bauthor', field: 'author', label: 'Author/Edition' },
+                    { id: 'blink', field: 'link', label: 'Drive Link' }
+                ]
+            },
+            'announcements': {
+                fields: ['title', 'desc', 'by'],
+                add: true,
+                inputs: [
+                    { id: 'atitle', field: 'title', label: 'Title' },
+                    { id: 'adesc', field: 'desc', label: 'Description' },
+                    { id: 'aby', field: 'by', label: 'Posted By' }
+                ]
+            },
+            'events': {
+                fields: ['title', 'date', 'desc'], add: true,
+                inputs: [{id: 'etitle', field: 'title', label: 'Event Title'}, {id: 'edate', field: 'date', label: 'Date/Time'}, {id: 'edesc', field: 'desc', label: 'Description'}]
+            },
+            'hostel_info': {
+                fields: ['title', 'desc'], add: true,
+                inputs: [{id: 'htitle', field: 'title', label: 'Title'}, {id: 'hdesc', field: 'desc', label: 'Description'}]
+            },
+            'canteen_info': {
+                fields: ['title', 'desc'], add: true,
+                inputs: [{id: 'ctitle', field: 'title', label: 'Item/Category'}, {id: 'cdesc', field: 'desc', label: 'Details'}]
+            },
+            'placements': {
+                fields: ['title', 'desc'], add: true,
+                inputs: [{id: 'ptitle', field: 'title', label: 'Company/Title'}, {id: 'pdesc', field: 'desc', label: 'Details'}]
+            }
+        };
+
+        async function loadCollection(collection) {
+            const schema = schemas[collection] || { fields: ['title', 'desc'], add: true, inputs: [{id:'t',label:'Title'},{id:'d',label:'Desc'}] };
+            
+            // Build Form
+            const addContainer = document.getElementById('crudContainer');
+            const inputsDiv = document.getElementById('addFormInputs');
+            inputsDiv.innerHTML = '';
+            
+            if (schema.add) {
+                addContainer.style.display = 'block';
+                schema.inputs.forEach(inp => {
+                    inputsDiv.innerHTML += `
+                        <div class="input-group">
+                            <label>${inp.label}</label>
+                            <input type="text" id="add_${inp.id}">
+                        </div>
+                    `;
+                });
+            } else {
+                addContainer.style.display = 'none';
+            }
+
+            // Build Table Header
+            const thead = document.getElementById('tableHead');
+            thead.innerHTML = '<tr>' + schema.fields.map(f => `<th>${f.toUpperCase()}</th>`).join('') + '<th>ACTIONS</th></tr>';
+
+            // Fetch & Build Rows
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '<tr><td colspan="5">Loading...</td></tr>';
+            
+            try {
+                let docs = [];
+                // users collection doesn't use standard apiList wrapper in Saptha sometimes
+                if (collection === 'users') {
+                    const snap = await db.ref('users').once('value');
+                    snap.forEach(c => docs.push({ id: c.key, data: c.val() }));
+                } else {
+                    docs = await apiList(collection);
+                }
+
+                tbody.innerHTML = '';
+                if (docs.length === 0) tbody.innerHTML = '<tr><td colspan="5">No records found.</td></tr>';
+
+                docs.forEach(doc => {
+                    const data = doc.data || doc;
+                    let tr = '<tr>';
+                    schema.fields.forEach(f => {
+                        tr += `<td>${data[f] || '-'}</td>`;
+                    });
+                    
+                    tr += `<td>`;
+                    if (collection === 'pending_admins') {
+                        tr += `<button class="action-btn btn-approve" onclick="approveAdmin('${doc.id}', '${data.srn}', '${data.name}', '${data.password}')">Approve</button> `;
+                    }
+                    tr += `<button class="action-btn btn-delete" onclick="deleteRecord('${collection}', '${doc.id}')">Delete</button></td></tr>`;
+                    tbody.innerHTML += tr;
+                });
+            } catch (e) {
+                tbody.innerHTML = `<tr><td colspan="5">Error loading data: ${e.message}</td></tr>`;
+            }
+        }
+
+        async function addRecord() {
+            const schema = schemas[currentCollection] || { inputs: [{id:'t'},{id:'d'}] };
+            const payload = {};
+            
+            if (currentCollection === 'users') {
+                payload.srn = document.getElementById('add_usrn').value.trim();
+                payload.name = document.getElementById('add_uname').value.trim();
+                payload.role = document.getElementById('add_urole').value.trim();
+                payload.password = document.getElementById('add_upwd').value.trim();
+                if (!payload.srn) return alert("SRN required");
+                await db.ref('users').child(payload.srn).set(payload);
+            } 
+            else if (currentCollection === 'contacts_list') {
+                payload.name = document.getElementById('add_cname').value;
+                payload.email = document.getElementById('add_cemail').value;
+                payload.phone = document.getElementById('add_cphone').value;
+                await apiCreate('contacts_list', payload);
+            }
+            else if (currentCollection === 'library') {
+                payload.title = document.getElementById('add_btitle').value;
+                payload.author = document.getElementById('add_bauthor').value;
+                payload.link = document.getElementById('add_blink').value;
+                await apiCreate('library', payload);
+            }
+            else if (currentCollection === 'announcements') {
+                payload.title = document.getElementById('add_atitle').value;
+                payload.desc = document.getElementById('add_adesc').value;
+                payload.by = document.getElementById('add_aby').value;
+                await apiCreate('announcements', payload);
+            }
+            else {
+                // generic fallback
+                schema.inputs.forEach(inp => {
+                    payload[inp.field || inp.id] = document.getElementById('add_'+inp.id).value;
+                });
+                await apiCreate(currentCollection, payload);
+            }
+
+            schema.inputs.forEach(inp => document.getElementById('add_'+inp.id).value = '');
+            loadCollection(currentCollection);
+        }
+
+        async function deleteRecord(collection, id) {
+            if(!confirm("Are you sure you want to delete this?")) return;
+            if (collection === 'users') {
+                await db.ref('users').child(id).remove();
+            } else {
+                await apiDelete(collection, id);
+            }
+            loadCollection(collection);
+        }
+
+        async function approveAdmin(id, srn, name, pwd) {
+            if(!confirm(`Approve admin access for ${name}?`)) return;
+            // Add to users
+            await db.ref('users').child(srn).set({
+                srn: srn,
+                name: name,
+                password: pwd,
+                role: 'admin',
+                created_at: new Date().toISOString()
+            });
+            // Delete from pending
+            await apiDelete('pending_admins', id);
+            loadCollection('pending_admins');
+        }
+
+        // Check if already logged in on load
+        window.addEventListener('DOMContentLoaded', () => {
+            initDashboard();
+        });
+    </script>
+</body>
+</html>

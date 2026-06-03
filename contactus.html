@@ -113,13 +113,6 @@
                     <label>Select Developer</label>
                     <select id="devSelect" onchange="updateDevDetails()">
                         <option value="" disabled selected>Choose a developer...</option>
-                        <option value="deekshapaic@gmail.com" data-phone="+91 9845977489">Deeksha Pai C</option>
-                        <option value="chaithanyaramachandra@gmail.com" data-phone="+91 8217865036">Chaithanya R
-                        </option>
-                        <option value="dhanugagan2006@gmail.com" data-phone="+91 82174 15366">Dhanush M</option>
-                        <option value="charanvlogs28@gmail.com" data-phone="+91 86181 27292">Charan S</option>
-                        <option value="devarajgr618@gmail.com" data-phone="+91 7337754518">Devaraju G R</option>
-                        <option value="kishore.education045@gmail.com" data-phone="+91 8495977045">Kishore S</option>
                     </select>
 
                     <label>Your Name</label>
@@ -138,6 +131,42 @@
     </section>
 
     <script>
+        async function loadDevelopers() {
+            const docs = await apiList('contacts_list');
+            const sel = document.getElementById("devSelect");
+            
+            // Add existing static developers as fallback if DB is empty
+            if (docs.length === 0) {
+                const defaults = [
+                    { name: "Deeksha Pai C", email: "deekshapaic@gmail.com", phone: "+91 9845977489" },
+                    { name: "Chaithanya R", email: "chaithanyaramachandra@gmail.com", phone: "+91 8217865036" },
+                    { name: "Dhanush M", email: "dhanugagan2006@gmail.com", phone: "+91 82174 15366" },
+                    { name: "Charan S", email: "charanvlogs28@gmail.com", phone: "+91 86181 27292" },
+                    { name: "Devaraju G R", email: "devarajgr618@gmail.com", phone: "+91 7337754518" },
+                    { name: "Kishore S", email: "kishore.education045@gmail.com", phone: "+91 8495977045" }
+                ];
+                defaults.forEach(d => {
+                    const opt = document.createElement("option");
+                    opt.value = d.email;
+                    opt.setAttribute("data-phone", d.phone);
+                    opt.textContent = d.name;
+                    sel.appendChild(opt);
+                });
+                return;
+            }
+
+            docs.forEach(d => {
+                const data = d.data || d; // Handle both wrapper formats depending on apiList changes
+                const opt = document.createElement("option");
+                opt.value = data.email || "";
+                opt.setAttribute("data-phone", data.phone || "");
+                opt.textContent = data.name || "Unknown Developer";
+                sel.appendChild(opt);
+            });
+        }
+        
+        loadDevelopers();
+
         function updateDevDetails() {
             const sel = document.getElementById("devSelect");
             const option = sel.options[sel.selectedIndex];
