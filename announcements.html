@@ -165,64 +165,12 @@ function render(){
             : `<a class="btn sm" href="${a.file}" download>Download File</a>`
           }
         ` : ""}
-
-        ${canEdit("announcements") ? `
-          <button class="btn sm" style="margin-top:12px;background:#e74c3c"
-            onclick="deleteAnnouncement('${a.id}')">
-            Delete
-          </button>
-        ` : ""}
       </li>
     `);
   });
 }
 
-if(canEdit("announcements")){
-  document.getElementById("coordForm").innerHTML = `
-    <div class="card" style="margin-bottom:25px;padding:20px">
-      <h4>Post Announcement</h4>
-      <input id="t" placeholder="Title">
-      <textarea id="b" placeholder="Message" rows="3"></textarea>
-      <select id="batchSelect" style="width:100%; padding:10px; margin-top:8px; border:1px solid #ddd; border-radius:6px; font-size:14px;">
-        <option value="All">All Batches</option>
-        <option value="2024">2024 Batch</option>
-        <option value="2025">2025 Batch</option>
-        <option value="2026">2026 Batch</option>
-        <option value="2027">2027 Batch</option>
-      </select>
-      <input type="file" id="f">
-      <button class="btn gold" onclick="post()" style="margin-top:12px">Publish</button>
-    </div>
-  `;
-}
 
-async function post(){
-  const t = document.getElementById("t").value.trim();
-  const b = document.getElementById("b").value.trim();
-  const f = document.getElementById("f").files[0];
-  const batchVal = document.getElementById("batchSelect").value;
-
-  if(!t || !b){ alert("Fill all fields"); return; }
-
-  let fileData = null;
-  if(f) fileData = await fileToDataURL(f);
-
-  await apiCreate(COLLECTION, {
-    title: t,
-    body: b,
-    by: "Coordinator",
-    date: new Date().toLocaleDateString(),
-    file: fileData,
-    batch: batchVal
-  });
-
-  document.getElementById("t").value = "";
-  document.getElementById("b").value = "";
-  document.getElementById("f").value = "";
-
-  await loadAnnouncements();
-  render();
-}
 
 loadAnnouncements().then(render).catch(err => alert(err.message));
 renderFooter();

@@ -140,11 +140,6 @@ function render(){
           }
         ` : ``}
 
-        ${canEdit("hostel") ? `
-          <button class="btn sm" style="margin-top:10px;background:#e74c3c"
-            onclick="deleteAnnouncement('${a.id}')">
-            Delete
-          </button>
         ` : ``}
       </li>
     `);
@@ -174,89 +169,8 @@ function renderHostelInfo(){
     }).join("<br>");
 }
 
-if(canEdit("hostel")){
-  document.getElementById("hostelEditForm").innerHTML = `
-    <div class="card" style="margin:20px 0">
-      <h4>Edit Hostel Details</h4>
-      <label>Weekly Menu</label>
-      <textarea id="hm" rows="7"></textarea>
-      <label>Contact Details</label>
-      <textarea id="hc" rows="4"></textarea>
-      <button class="btn gold" style="margin-top:10px" onclick="saveHostelInfo()">Save Details</button>
-      <div id="hostelSaveStatus" style="font-size:13px;margin-top:8px"></div>
-    </div>`;
-
-  document.getElementById("coordForm").innerHTML = `
-    <div class="card" style="margin:20px 0">
-      <h4>Post Hostel Announcement</h4>
-      <label>Title</label>
-      <input id="t" placeholder="Title">
-      <label>Message</label>
-      <textarea id="b" rows="3" placeholder="Message..."></textarea>
-      <label>Attach File (PDF/Image)</label>
-      <input type="file" id="f">
-      <button class="btn gold" style="margin-top:10px" onclick="post()">Publish</button>
-    </div>`;
-}
-
-async function saveHostelInfo(){
-  const menu = document.getElementById("hm").value.trim();
-  const contact = document.getElementById("hc").value.trim();
-  const status = document.getElementById("hostelSaveStatus");
-
-  if(!menu || !contact){ alert("Fill menu and contact details"); return; }
-
-  try{
-    status.style.color = "#555";
-    status.textContent = "Saving...";
-    await apiCreate(INFO_COLLECTION, {menu, contact});
-    await loadItems();
-    render();
-    fillHostelForm();
-    status.style.color = "green";
-    status.textContent = "Saved.";
-  }catch(err){
-    status.style.color = "#e74c3c";
-    status.textContent = err.message;
-  }
-}
-
-function fillHostelForm(){
-  if(!canEdit("hostel")) return;
-  const info = hostelInfo || DEFAULT_HOSTEL_INFO;
-  document.getElementById("hm").value = info.menu;
-  document.getElementById("hc").value = info.contact;
-}
-
-async function post(){
-  const t = document.getElementById("t").value.trim();
-  const b = document.getElementById("b").value.trim();
-  const f = document.getElementById("f").files[0];
-
-  if(!t || !b){ alert("Fill all fields"); return; }
-
-  let fileData = null;
-  if(f) fileData = await fileToBase64(f);
-
-  await apiCreate(COLLECTION, {
-    title: t,
-    body: b,
-    by: "Warden",
-    date: new Date().toLocaleDateString(),
-    file: fileData
-  });
-
-  document.getElementById("t").value="";
-  document.getElementById("b").value="";
-  document.getElementById("f").value="";
-
-  await loadItems();
-  render();
-}
-
 loadItems().then(()=>{
   render();
-  fillHostelForm();
 }).catch(err => alert(err.message));
 renderFooter();
 </script>

@@ -83,42 +83,10 @@ function render(){
 
         <div style="display:flex;gap:6px;margin-top:8px">
           <button class="btn sm" onclick="downloadDataURL('${n.data}','${n.name}')">Download</button>
-          ${canEdit("library")
-            ? `<button class="btn sm danger" onclick="deleteBook('${n.id}')">Delete</button>`
-            : ``}
         </div>
       </li>
     `);
   });
-}
-
-if(canEdit("library")){
-  document.getElementById("coord").innerHTML = `
-    <div class="card" style="margin-bottom:18px">
-      <h4>Upload Textbook</h4>
-      <input type="file" id="lf">
-      <button class="btn gold sm" style="margin-top:8px" onclick="upload()">Upload</button>
-    </div>`;
-}
-
-async function upload(){
-  const f = document.getElementById("lf").files[0];
-  if(!f) return alert("Choose a file");
-  if(f.size > 8 * 1024 * 1024) return alert("Max 8MB");
-
-  const data = await fileToBase64(f);
-
-  await apiCreate(COLLECTION, {
-    name: f.name,
-    size: f.size,
-    data: data,
-    by: "Coordinator",
-    date: new Date().toLocaleDateString()
-  });
-
-  document.getElementById("lf").value="";
-  await loadItems();
-  render();
 }
 
 loadItems().then(render).catch(err => alert(err.message));
