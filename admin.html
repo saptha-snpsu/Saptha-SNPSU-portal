@@ -236,9 +236,9 @@
             const pwd = document.getElementById('loginPwd').value;
             const err = document.getElementById('loginErr');
 
-            const srnRegex = /^\d{2}[A-Z]{7}\d{4}$/;
+            const srnRegex = /^(?:\d{2}[A-Z]{7}\d{4}|\d{2}[A-Z]{8}\d{3})$/;
             if (!srnRegex.test(srn)) {
-                err.textContent = "Invalid SRN format. Expected format: 2 digits, 7 letters, 4 digits (e.g. 24SUUBECS0952)";
+                err.textContent = "Invalid SRN format. Expected format: e.g. 24SUUBECS0952 or 24SUUBELCS001";
                 err.style.display = 'block';
                 return;
             }
@@ -295,9 +295,9 @@
             const err = document.getElementById('regErr');
             const succ = document.getElementById('regSucc');
 
-            const srnRegex = /^\d{2}[A-Z]{7}\d{4}$/;
+            const srnRegex = /^(?:\d{2}[A-Z]{7}\d{4}|\d{2}[A-Z]{8}\d{3})$/;
             if (!srnRegex.test(srn)) {
-                err.textContent = "Invalid SRN format. Expected format: 2 digits, 7 letters, 4 digits (e.g. 24SUUBECS0952)";
+                err.textContent = "Invalid SRN format. Expected format: e.g. 24SUUBECS0952 or 24SUUBELCS001";
                 err.style.display = 'block';
                 succ.style.display = 'none';
                 return;
@@ -554,9 +554,9 @@
                 payload.password = document.getElementById('add_upwd').value.trim();
                 if (!payload.srn) return alert("SRN required");
                 
-                const srnRegex = /^\d{2}[A-Z]{7}\d{4}$/;
+                const srnRegex = /^(?:\d{2}[A-Z]{7}\d{4}|\d{2}[A-Z]{8}\d{3})$/;
                 if (!srnRegex.test(payload.srn)) {
-                    return alert("Invalid SRN format. Expected format: 2 digits, 7 letters, 4 digits (e.g. 24SUUBECS0952)");
+                    return alert("Invalid SRN format. Expected format: e.g. 24SUUBECS0952 or 24SUUBELCS001");
                 }
                 await db.ref('users').child(payload.srn).set(payload);
             } 

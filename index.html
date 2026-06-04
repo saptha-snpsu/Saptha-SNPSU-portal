@@ -256,9 +256,9 @@
             const password = document.getElementById("pwd").value;
             const err = document.getElementById("err");
 
-            const srnRegex = /^\d{2}[A-Z]{7}\d{4}$/;
+            const srnRegex = /^(?:\d{2}[A-Z]{7}\d{4}|\d{2}[A-Z]{8}\d{3})$/;
             if (!srnRegex.test(srn)) {
-                err.textContent = "Invalid SRN format. Expected format: 2 digits, 7 letters, 4 digits (e.g., 24SUUBECSXXXX)";
+                err.textContent = "Invalid SRN format. Expected format: e.g. 24SUUBECS0952 or 24SUUBELCS001";
                 err.style.display = "block";
                 return;
             }
