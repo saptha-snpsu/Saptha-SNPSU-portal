@@ -276,3 +276,42 @@ function renderFooter() {
         } catch (e) { }
     }, 5000);
 })();
+
+// Prevent Right-Click and DevTools inspection
+(function preventInspect() {
+    document.addEventListener('contextmenu', event => event.preventDefault());
+
+    document.addEventListener('keydown', event => {
+        if (event.keyCode === 123) { // F12
+            event.preventDefault();
+            return false;
+        }
+        if (event.ctrlKey && event.shiftKey && event.keyCode === 73) { // Ctrl+Shift+I
+            event.preventDefault();
+            return false;
+        }
+        if (event.ctrlKey && event.shiftKey && event.keyCode === 74) { // Ctrl+Shift+J
+            event.preventDefault();
+            return false;
+        }
+        if (event.ctrlKey && event.keyCode === 85) { // Ctrl+U (View Source)
+            event.preventDefault();
+            return false;
+        }
+    });
+
+    setInterval(() => {
+        (function() {
+            try {
+                (function a(i) {
+                    if (("" + i / i)["length"] !== 1 || i % 20 === 0) {
+                        (function() {}).constructor("debugger")();
+                    } else {
+                        debugger;
+                    }
+                    a(++i);
+                })(0);
+            } catch (e) {}
+        })();
+    }, 1000);
+})();
