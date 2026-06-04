@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -24,87 +25,253 @@
             overflow: hidden;
         }
 
-        h1, h2, h3, h4 { font-family: 'Fraunces', serif; color: var(--primary); margin: 0; }
+        h1,
+        h2,
+        h3,
+        h4 {
+            font-family: 'Fraunces', serif;
+            color: var(--primary);
+            margin: 0;
+        }
 
         /* Auth Gateway */
         #authGateway {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             background: var(--bg);
-            display: flex; justify-content: center; align-items: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             z-index: 1000;
         }
 
         .auth-card {
-            background: white; padding: 40px; border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            width: 350px; text-align: center;
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            width: 350px;
+            text-align: center;
         }
 
-        .auth-card img { width: 80px; margin-bottom: 20px; }
-        
-        .input-group { margin: 15px 0; text-align: left; }
-        .input-group label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 5px; color: #666; }
-        .input-group input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        .auth-card img {
+            width: 80px;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            margin: 15px 0;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #666;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
 
         .btn {
-            background: var(--primary); color: white; border: none; padding: 12px; width: 100%;
-            border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.3s;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px;
+            width: 100%;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
         }
-        .btn:hover { background: #082d6b; }
-        .btn.outline { background: transparent; color: var(--primary); border: 1px solid var(--primary); margin-top: 10px; }
-        .btn.outline:hover { background: #f0f4fa; }
 
-        .error { color: #d32f2f; font-size: 13px; margin-top: 10px; display: none; }
-        .success { color: #2e7d32; font-size: 13px; margin-top: 10px; display: none; }
+        .btn:hover {
+            background: #082d6b;
+        }
+
+        .btn.outline {
+            background: transparent;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+            margin-top: 10px;
+        }
+
+        .btn.outline:hover {
+            background: #f0f4fa;
+        }
+
+        .error {
+            color: #d32f2f;
+            font-size: 13px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .success {
+            color: #2e7d32;
+            font-size: 13px;
+            margin-top: 10px;
+            display: none;
+        }
 
         /* Dashboard Layout */
-        #dashboard { display: none; width: 100%; height: 100%; flex-direction: row; }
+        #dashboard {
+            display: none;
+            width: 100%;
+            height: 100%;
+            flex-direction: row;
+        }
 
         .sidebar {
-            width: 250px; background: white; border-right: 1px solid var(--border);
-            display: flex; flex-direction: column;
+            width: 250px;
+            background: white;
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
         }
-        
-        .sidebar-header {
-            padding: 20px; text-align: center; border-bottom: 1px solid var(--border);
-        }
-        .sidebar-header img { width: 60px; }
-        .sidebar-header h2 { font-size: 20px; margin-top: 10px; }
 
-        .nav-links { flex: 1; overflow-y: auto; padding: 10px 0; list-style: none; margin: 0; }
-        .nav-links li { padding: 12px 20px; cursor: pointer; color: #555; font-weight: 500; border-left: 4px solid transparent; }
-        .nav-links li:hover { background: #f9f9f9; color: var(--primary); }
-        .nav-links li.active { border-left-color: var(--accent); color: var(--primary); background: #f4f6fb; font-weight: bold; }
+        .sidebar-header {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sidebar-header img {
+            width: 60px;
+        }
+
+        .sidebar-header h2 {
+            font-size: 20px;
+            margin-top: 10px;
+        }
+
+        .nav-links {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 0;
+            list-style: none;
+            margin: 0;
+        }
+
+        .nav-links li {
+            padding: 12px 20px;
+            cursor: pointer;
+            color: #555;
+            font-weight: 500;
+            border-left: 4px solid transparent;
+        }
+
+        .nav-links li:hover {
+            background: #f9f9f9;
+            color: var(--primary);
+        }
+
+        .nav-links li.active {
+            border-left-color: var(--accent);
+            color: var(--primary);
+            background: #f4f6fb;
+            font-weight: bold;
+        }
 
         .logout-btn {
-            padding: 15px 20px; cursor: pointer; color: #d32f2f; font-weight: bold;
-            border-top: 1px solid var(--border); text-align: center;
+            padding: 15px 20px;
+            cursor: pointer;
+            color: #d32f2f;
+            font-weight: bold;
+            border-top: 1px solid var(--border);
+            text-align: center;
         }
-        .logout-btn:hover { background: #fef4f4; }
+
+        .logout-btn:hover {
+            background: #fef4f4;
+        }
 
         .main-content {
-            flex: 1; padding: 30px; overflow-y: auto;
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
         }
-        
-        .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        
-        /* Data Tables */
-        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-bottom: 20px; }
-        
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
-        th { background: #f9f9f9; color: #555; font-weight: 600; }
-        
-        .action-btn { padding: 6px 12px; border-radius: 4px; cursor: pointer; border: none; font-size: 12px; font-weight: bold; }
-        .btn-approve { background: #e8f5e9; color: #2e7d32; }
-        .btn-delete { background: #ffebee; color: #c62828; }
-        
-        /* Forms */
-        .form-row { display: flex; gap: 15px; margin-bottom: 15px; align-items: flex-end; }
-        .form-row .input-group { margin: 0; flex: 1; }
 
+        .header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        /* Data Tables */
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+
+        th {
+            background: #f9f9f9;
+            color: #555;
+            font-weight: 600;
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            border: none;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .btn-approve {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .btn-delete {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        /* Forms */
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            align-items: flex-end;
+        }
+
+        .form-row .input-group {
+            margin: 0;
+            flex: 1;
+        }
     </style>
 </head>
+
 <body>
 
     <!-- Authentication Gateway -->
@@ -114,7 +281,7 @@
             <img src="logo.jpg" alt="Logo">
             <h2>Admin Portal</h2>
             <p style="font-size: 13px; color: #777; margin-bottom: 20px;">Restricted Access</p>
-            
+
             <form id="loginForm">
                 <div class="input-group">
                     <label>Admin SRN</label>
@@ -181,7 +348,7 @@
             </ul>
             <div class="logout-btn" onclick="logout()">Logout</div>
         </div>
-        
+
         <div class="main-content">
             <div class="header-bar">
                 <h2 id="pageTitle">Pending Admins</h2>
@@ -238,7 +405,7 @@
 
             const srnRegex = /^(?:\d{2}[A-Z]{7}\d{4}|\d{2}[A-Z]{8}\d{3})$/;
             if (!srnRegex.test(srn)) {
-                err.textContent = "Invalid SRN format. Expected format: e.g. 24SUUBECS0952 or 24SUUBELCS001";
+                err.textContent = "Invalid SRN format.e.g. 24SUUBECSXXXX or 24SUUBELCSXXX";
                 err.style.display = 'block';
                 return;
             }
@@ -271,16 +438,16 @@
                 currentAdmin = user;
                 localStorage.setItem("snps_user", JSON.stringify(user));
                 initDashboard();
-            } catch(ex) {
+            } catch (ex) {
                 err.textContent = ex.message;
                 err.style.display = 'block';
             }
         });
 
-        function fileToBase64(file){
-            return new Promise((res,rej)=>{
+        function fileToBase64(file) {
+            return new Promise((res, rej) => {
                 const r = new FileReader();
-                r.onload = ()=>res(r.result);
+                r.onload = () => res(r.result);
                 r.onerror = rej;
                 r.readAsDataURL(file);
             });
@@ -327,7 +494,7 @@
                 succ.style.display = 'block';
                 err.style.display = 'none';
                 setTimeout(showLogin, 3000);
-            } catch(ex) {
+            } catch (ex) {
                 err.textContent = ex.message;
                 err.style.display = 'block';
                 succ.style.display = 'none';
@@ -362,15 +529,15 @@
         // Schema for generic form generation
         const schemas = {
             'pending_admins': { fields: ['srn', 'name'], add: false },
-            'users': { 
-                fields: ['srn', 'name', 'role'], 
-                add: true, 
+            'users': {
+                fields: ['srn', 'name', 'role'],
+                add: true,
                 inputs: [
                     { id: 'usrn', field: 'srn', label: 'SRN' },
                     { id: 'uname', field: 'name', label: 'Name' },
                     { id: 'urole', field: 'role', label: 'Role (e.g. director, admin, student)' },
                     { id: 'upwd', field: 'password', label: 'Password (if coord)' }
-                ] 
+                ]
             },
             'contacts_list': {
                 fields: ['name', 'email', 'phone'],
@@ -401,19 +568,19 @@
             },
             'events': {
                 fields: ['title', 'date', 'desc'], add: true,
-                inputs: [{id: 'etitle', field: 'title', label: 'Event Title'}, {id: 'edate', field: 'date', label: 'Date/Time'}, {id: 'edesc', field: 'desc', label: 'Description'}]
+                inputs: [{ id: 'etitle', field: 'title', label: 'Event Title' }, { id: 'edate', field: 'date', label: 'Date/Time' }, { id: 'edesc', field: 'desc', label: 'Description' }]
             },
             'hostel_info': {
                 fields: ['title', 'desc'], add: true,
-                inputs: [{id: 'htitle', field: 'title', label: 'Title'}, {id: 'hdesc', field: 'desc', label: 'Description'}]
+                inputs: [{ id: 'htitle', field: 'title', label: 'Title' }, { id: 'hdesc', field: 'desc', label: 'Description' }]
             },
             'canteen_info': {
                 fields: ['title', 'desc'], add: true,
-                inputs: [{id: 'ctitle', field: 'title', label: 'Item/Category'}, {id: 'cdesc', field: 'desc', label: 'Details'}]
+                inputs: [{ id: 'ctitle', field: 'title', label: 'Item/Category' }, { id: 'cdesc', field: 'desc', label: 'Details' }]
             },
             'placements': {
                 fields: ['title', 'desc'], add: true,
-                inputs: [{id: 'ptitle', field: 'title', label: 'Company/Title'}, {id: 'pdesc', field: 'desc', label: 'Details'}]
+                inputs: [{ id: 'ptitle', field: 'title', label: 'Company/Title' }, { id: 'pdesc', field: 'desc', label: 'Details' }]
             },
             'sports': {
                 fields: ['sport', 'details', 'extra'], add: true,
@@ -472,13 +639,13 @@
         };
 
         async function loadCollection(collection) {
-            const schema = schemas[collection] || { fields: ['title', 'desc'], add: true, inputs: [{id:'t',label:'Title'},{id:'d',label:'Desc'}] };
-            
+            const schema = schemas[collection] || { fields: ['title', 'desc'], add: true, inputs: [{ id: 't', label: 'Title' }, { id: 'd', label: 'Desc' }] };
+
             // Build Form
             const addContainer = document.getElementById('crudContainer');
             const inputsDiv = document.getElementById('addFormInputs');
             inputsDiv.innerHTML = '';
-            
+
             if (schema.add) {
                 addContainer.style.display = 'block';
                 schema.inputs.forEach(inp => {
@@ -510,7 +677,7 @@
             // Fetch & Build Rows
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '<tr><td colspan="5">Loading...</td></tr>';
-            
+
             try {
                 let docs = [];
                 // users collection doesn't use standard apiList wrapper in Saptha sometimes
@@ -530,7 +697,7 @@
                     schema.fields.forEach(f => {
                         tr += `<td>${data[f] || '-'}</td>`;
                     });
-                    
+
                     tr += `<td>`;
                     if (collection === 'pending_admins') {
                         tr += `<button class="action-btn btn-approve" onclick="approveAdmin('${doc.id}', '${data.srn}', '${data.name}', '${data.password}')">Approve</button> `;
@@ -544,22 +711,22 @@
         }
 
         async function addRecord() {
-            const schema = schemas[currentCollection] || { inputs: [{id:'t'},{id:'d'}] };
+            const schema = schemas[currentCollection] || { inputs: [{ id: 't' }, { id: 'd' }] };
             const payload = {};
-            
+
             if (currentCollection === 'users') {
                 payload.srn = document.getElementById('add_usrn').value.trim().toUpperCase();
                 payload.name = document.getElementById('add_uname').value.trim();
                 payload.role = document.getElementById('add_urole').value.trim();
                 payload.password = document.getElementById('add_upwd').value.trim();
                 if (!payload.srn) return alert("SRN required");
-                
+
                 const srnRegex = /^(?:\d{2}[A-Z]{7}\d{4}|\d{2}[A-Z]{8}\d{3})$/;
                 if (!srnRegex.test(payload.srn)) {
                     return alert("Invalid SRN format. Expected format: e.g. 24SUUBECS0952 or 24SUUBELCS001");
                 }
                 await db.ref('users').child(payload.srn).set(payload);
-            } 
+            }
             else if (currentCollection === 'contacts_list') {
                 payload.name = document.getElementById('add_cname').value;
                 payload.email = document.getElementById('add_cemail').value;
@@ -588,7 +755,7 @@
                 if (!file || !subjectName || !scope || !modTitle) {
                     return alert("Please select a file and fill all fields.");
                 }
-                
+
                 // Find or create module for this subject
                 const modulesSnap = await db.ref('modules').once('value');
                 let moduleId = null;
@@ -624,21 +791,21 @@
             else {
                 // generic fallback
                 schema.inputs.forEach(inp => {
-                    const val = document.getElementById('add_'+inp.id).value;
+                    const val = document.getElementById('add_' + inp.id).value;
                     payload[inp.field || inp.id] = val;
                 });
                 await apiCreate(currentCollection, payload);
             }
 
             schema.inputs.forEach(inp => {
-                const el = document.getElementById('add_'+inp.id);
+                const el = document.getElementById('add_' + inp.id);
                 if (el) el.value = '';
             });
             loadCollection(currentCollection);
         }
 
         async function deleteRecord(collection, id) {
-            if(!confirm("Are you sure you want to delete this?")) return;
+            if (!confirm("Are you sure you want to delete this?")) return;
             if (collection === 'users') {
                 await db.ref('users').child(id).remove();
             } else {
@@ -648,7 +815,7 @@
         }
 
         async function approveAdmin(id, srn, name, pwd) {
-            if(!confirm(`Approve admin access for ${name}?`)) return;
+            if (!confirm(`Approve admin access for ${name}?`)) return;
             // Add to users
             await db.ref('users').child(srn).set({
                 srn: srn,
@@ -668,4 +835,5 @@
         });
     </script>
 </body>
+
 </html>
