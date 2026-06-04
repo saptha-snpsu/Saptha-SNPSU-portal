@@ -232,6 +232,13 @@ document.getElementById("loginForm").addEventListener("submit", async e=>{
     const password=document.getElementById("pwd").value;
     const err=document.getElementById("err");
 
+    const srnRegex = /^\d{2}[A-Z]{7}\d{4}$/;
+    if (!srnRegex.test(srn)) {
+        err.textContent = "Invalid SRN format. Expected format: 2 digits, 7 letters, 4 digits (e.g., 24SUUBECS0952)";
+        err.style.display = "block";
+        return;
+    }
+
     try {
         const usersRef = window.firebase.database().ref('users');
         const snapshot = await usersRef.orderByChild('srn').equalTo(srn).once('value');

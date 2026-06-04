@@ -236,6 +236,13 @@
             const pwd = document.getElementById('loginPwd').value;
             const err = document.getElementById('loginErr');
 
+            const srnRegex = /^\d{2}[A-Z]{7}\d{4}$/;
+            if (!srnRegex.test(srn)) {
+                err.textContent = "Invalid SRN format. Expected format: 2 digits, 7 letters, 4 digits (e.g. 24SUUBECS0952)";
+                err.style.display = 'block';
+                return;
+            }
+
             try {
                 // Auto-seed super admin into Firebase on first login
                 if (srn === '24SUUBECS0952' && pwd === 'admin@5185') {
@@ -287,6 +294,14 @@
             const pwd = document.getElementById('regPwd').value;
             const err = document.getElementById('regErr');
             const succ = document.getElementById('regSucc');
+
+            const srnRegex = /^\d{2}[A-Z]{7}\d{4}$/;
+            if (!srnRegex.test(srn)) {
+                err.textContent = "Invalid SRN format. Expected format: 2 digits, 7 letters, 4 digits (e.g. 24SUUBECS0952)";
+                err.style.display = 'block';
+                succ.style.display = 'none';
+                return;
+            }
 
             try {
                 // check if already an admin in users
@@ -533,11 +548,16 @@
             const payload = {};
             
             if (currentCollection === 'users') {
-                payload.srn = document.getElementById('add_usrn').value.trim();
+                payload.srn = document.getElementById('add_usrn').value.trim().toUpperCase();
                 payload.name = document.getElementById('add_uname').value.trim();
                 payload.role = document.getElementById('add_urole').value.trim();
                 payload.password = document.getElementById('add_upwd').value.trim();
                 if (!payload.srn) return alert("SRN required");
+                
+                const srnRegex = /^\d{2}[A-Z]{7}\d{4}$/;
+                if (!srnRegex.test(payload.srn)) {
+                    return alert("Invalid SRN format. Expected format: 2 digits, 7 letters, 4 digits (e.g. 24SUUBECS0952)");
+                }
                 await db.ref('users').child(payload.srn).set(payload);
             } 
             else if (currentCollection === 'contacts_list') {
