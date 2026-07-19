@@ -1,0 +1,27 @@
+{
+  "name": "saptha-snpsu-portal",
+  "version": "1.0.0",
+  "description": "SAPTHA - Sapthagiri NPS University Student Portal",
+  "main": "migrate-rtdb.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/saptha-snpsu/Saptha-SNPSU-portal.git"
+  },
+  "keywords": [
+    "education",
+    "portal",
+    "university"
+  ],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/saptha-snpsu/Saptha-SNPSU-portal/issues"
+  },
+  "homepage": "https://github.com/saptha-snpsu/Saptha-SNPSU-portal#readme",
+  "dependencies": {
+    "@vercel/analytics": "^2.0.1"
+  }
+}
