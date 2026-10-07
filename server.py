@@ -241,6 +241,7 @@ CONTENT_WRITE_ROLES = {
     "canteen_info": {"admin", "canteen_coordinator"},
     "library": {"admin", "library_coordinator"},
     "contacts_list": {"admin"},
+    "course_notes": {"admin", "course_coordinator"},
 }
 
 CONTENT_ADMIN_ONLY = {"pending_admins"}
@@ -262,6 +263,7 @@ ALLOWED_COLLECTIONS = {
     "module_files",
     "contacts_list",
     "pending_admins",
+    "course_notes",
 }
 PUBLIC_STATIC_EXTENSIONS = {
     ".css",

@@ -31,13 +31,15 @@ async function migrate() {
     const collections = [
         'announcements', 'activity_announcements', 'events', 'placements',
         'sports', 'hrd_programs', 'hostel_announcements', 'hostel_info',
-        'canteen_info', 'library', 'subjects', 'modules'
+        'canteen_info', 'library', 'subjects', 'modules', 'pending_admins',
+        'contacts_list'
     ];
     
     for (const col of collections) {
-        if (data[col]) {
+        const items = (data.content && data.content[col]) || data[col];
+        if (items) {
             console.log(`Migrating ${col}...`);
-            await db.ref(col).set(data[col]);
+            await db.ref(col).set(items);
         }
     }
     

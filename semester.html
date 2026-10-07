@@ -23,26 +23,114 @@
   cursor: pointer;
   z-index: 99999;
   box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+}
+.add-btn:hover {
+  transform: scale(1.08);
 }
 .subject-dialog{
-    width:min(460px, calc(100% - 32px));
+    width:min(540px, calc(100% - 32px));
     border:0;
-    border-radius:10px;
+    border-radius:12px;
+    padding:0;
+    box-shadow:0 18px 55px rgba(0,0,0,0.28);
+    background:#ffffff;
+}
+.subject-dialog::backdrop{
+    background:rgba(15,25,40,0.55);
+    backdrop-filter:blur(2px);
+}
+.modal-tabs{
+    display:flex;
+    background:#f0f3f8;
+    border-top-left-radius:12px;
+    border-top-right-radius:12px;
+    border-bottom:1px solid #ccd2dc;
+    overflow:hidden;
+}
+.modal-tab-btn{
+    flex:1;
+    padding:14px 10px;
+    border:0;
+    background:transparent;
+    font-size:14px;
+    font-weight:600;
+    color:#555;
+    cursor:pointer;
+    transition:background 0.2s, color 0.2s;
+    text-align:center;
+}
+.modal-tab-btn.active{
+    background:#ffffff;
+    color:#0b3d91;
+    border-bottom:3px solid #0b3d91;
+}
+.subject-form{
     padding:24px;
-    box-shadow:0 18px 55px rgba(0,0,0,0.25);
+    display:grid;
+    gap:14px;
 }
-.subject-dialog::backdrop{background:rgba(15,25,40,0.48)}
-.subject-form{display:grid;gap:14px}
-.subject-form label{display:grid;gap:6px;font-weight:600;font-size:14px;color:#333}
-.subject-form input,.subject-form textarea{
-    width:100%;padding:10px;border:1px solid #ccd2dc;border-radius:6px;
-    font:inherit;box-sizing:border-box;
+.subject-form label{
+    display:grid;
+    gap:6px;
+    font-weight:600;
+    font-size:13px;
+    color:#2b3b55;
 }
-.subject-form textarea{min-height:90px;resize:vertical}
-.subject-form-actions{display:flex;justify-content:flex-end;gap:10px}
-.subject-status{min-height:20px;margin:0;color:#555;font-size:13px}
+.subject-form input,
+.subject-form select,
+.subject-form textarea{
+    width:100%;
+    padding:10px 12px;
+    border:1px solid #ccd2dc;
+    border-radius:8px;
+    font:inherit;
+    font-size:14px;
+    box-sizing:border-box;
+    background:#fff;
+}
+.subject-form textarea{
+    min-height:85px;
+    resize:vertical;
+}
+.subject-form-actions{
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+    margin-top:6px;
+}
+.subject-status{
+    min-height:20px;
+    margin:0;
+    color:#555;
+    font-size:13px;
+}
+.note-resource-card{
+    background:#ffffff;
+    border-left:5px solid #2ecc71;
+    border-radius:10px;
+    padding:20px;
+    box-shadow:0 6px 18px rgba(0,0,0,0.06);
+    cursor:pointer;
+    transition:transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    position:relative;
+}
+.note-resource-card:hover{
+    transform:translateY(-4px);
+    box-shadow:0 12px 28px rgba(11,61,145,0.12);
+    border-left-color:#0b3d91;
+}
+.section-divider{
+    margin:40px 0 25px;
+    border-top:1px solid #e2e6ee;
+}
 </style>
-
 </head>
 
 <body>
@@ -51,9 +139,9 @@
 <script>
 const u = requireAuth();
 renderHeader("departments.html");
-if (canEdit("departments")) {
+if (canEdit("departments") || canEdit("course_notes")) {
     document.body.insertAdjacentHTML("beforeend", `
-        <button class="add-btn" id="addSubjectOpen" type="button" aria-label="Add subject">+</button>
+        <button class="add-btn" id="addSubjectOpen" type="button" aria-label="Course Coordinator Actions">+</button>
     `);
 }
 </script>
@@ -64,26 +152,82 @@ if (canEdit("departments")) {
     <a class="back-link" href="departments.html">← Back to Departments</a>
 
     <h3 id="t">Loading...</h3>
-    <p class="lead">Click a subject to view modules and notes.</p>
+    <p class="lead">Select a subject for module notes, or click any direct Google Drive notes card below to open immediately.</p>
 
+    <!-- SECTION 1: COURSE SUBJECTS -->
+    <h4 style="margin:24px 0 12px;color:#0b3d91;font-size:20px;">📚 Course Subjects</h4>
     <div class="grid cols-3" id="sGrid"></div>
+
+    <!-- SECTION 2: DIRECT GOOGLE DRIVE NOTES & RESOURCES -->
+    <div class="section-divider"></div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;">
+        <h4 style="margin:0 0 4px;color:#0b3d91;font-size:20px;">📑 Direct Notes & Google Drive Documents</h4>
+        <small style="color:#666;">Clicking any card opens the document/PDF directly.</small>
+    </div>
+    <div class="grid cols-3" id="notesGrid" style="margin-top:16px;"></div>
 
 </div>
 </section>
 
-<dialog class="subject-dialog" id="addSubjectDialog" aria-labelledby="addSubjectTitle">
+<!-- MODAL DIALOG (COURSE COORDINATOR ACTIONS) -->
+<dialog class="subject-dialog" id="addSubjectDialog" aria-labelledby="dialogHeaderTitle">
+    
+    <div class="modal-tabs">
+        <button type="button" class="modal-tab-btn active" id="tabBtnSubject" onclick="switchModalTab('subject')">
+            ➕ Add Subject
+        </button>
+        <button type="button" class="modal-tab-btn" id="tabBtnNotes" onclick="switchModalTab('notes')">
+            🔗 Upload Notes / Drive Link
+        </button>
+    </div>
+
+    <!-- TAB 1: ADD SUBJECT -->
     <form class="subject-form" id="addSubjectForm">
-        <h3 id="addSubjectTitle">Add Subject · Semester <span id="subjectSemesterLabel"></span></h3>
+        <h3 id="dialogHeaderTitle" style="margin:0;color:#0b3d91;font-size:18px;">Add New Subject · Semester <span class="sem-label"></span></h3>
         <label for="newSubjectName">Subject name
-            <input id="newSubjectName" type="text" required maxlength="80">
+            <input id="newSubjectName" type="text" required maxlength="80" placeholder="e.g. Operating Systems, Computer Networks">
         </label>
         <label for="newSubjectDescription">Description
-            <textarea id="newSubjectDescription" maxlength="300"></textarea>
+            <textarea id="newSubjectDescription" maxlength="300" placeholder="Brief outline of syllabus or course contents..."></textarea>
         </label>
         <p class="subject-status" id="addSubjectStatus" role="status" aria-live="polite"></p>
         <div class="subject-form-actions">
-            <button class="btn sm" id="addSubjectCancel" type="button">Cancel</button>
+            <button class="btn sm" id="addSubjectCancel" type="button" style="background:#eee;color:#333;">Cancel</button>
             <button class="btn sm" id="addSubjectSubmit" type="submit">Add Subject</button>
+        </div>
+    </form>
+
+    <!-- TAB 2: UPLOAD NOTES / GOOGLE DRIVE LINK -->
+    <form class="subject-form" id="addNotesForm" style="display:none;">
+        <h3 style="margin:0;color:#0b3d91;font-size:18px;">Upload Notes & Google Drive Link · Semester <span class="sem-label"></span></h3>
+        
+        <label for="noteTitle">Notes / Document Title
+            <input id="noteTitle" type="text" required maxlength="100" placeholder="e.g. Unit 1 Complete Notes & Handwritten PDF">
+        </label>
+
+        <label for="noteSubject">Related Subject
+            <select id="noteSubject" required>
+                <option value="">Select a Subject</option>
+            </select>
+        </label>
+
+        <label for="noteDriveLink">Google Drive Link / Document URL
+            <input id="noteDriveLink" type="url" placeholder="https://drive.google.com/file/d/.../view?usp=sharing">
+            <small style="font-weight:normal;color:#666;font-size:12px;margin-top:2px;">Paste Google Drive viewer link, Google Docs link, or public cloud URL.</small>
+        </label>
+
+        <label for="noteFile">OR Upload Direct PDF File (Optional)
+            <input id="noteFile" type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.rtf">
+        </label>
+
+        <label for="noteDescription">Notes Description & Summary
+            <textarea id="noteDescription" maxlength="300" placeholder="Provide details about chapters covered, key topics, or important formulas..."></textarea>
+        </label>
+
+        <p class="subject-status" id="addNotesStatus" role="status" aria-live="polite"></p>
+        <div class="subject-form-actions">
+            <button class="btn sm" id="addNotesCancel" type="button" style="background:#eee;color:#333;">Cancel</button>
+            <button class="btn sm" id="addNotesSubmit" type="submit">Publish Notes</button>
         </div>
     </form>
 </dialog>
@@ -100,34 +244,123 @@ const branch = "CSE";
 document.getElementById("t").textContent =
     `CSE (${selectedBatch} Batch, Sem ${sem})`;
 
-const COLLECTION = "subjects";
+document.querySelectorAll(".sem-label").forEach(el => el.textContent = sem);
+
+const SUBJECT_COLLECTION = "subjects";
+const NOTES_COLLECTION = "course_notes";
 const scope = `${branch}_${sem}`;
+
 let subjects = [];
+let courseNotes = [];
 
 async function loadSubjects(){
-    const raw = await apiList(COLLECTION, scope);
+    const raw = await apiList(SUBJECT_COLLECTION, scope);
     subjects = raw.map(item => ({
         id: item.id,
         ...item.data
     }));
 }
 
+async function loadNotes(){
+    try {
+        const raw = await apiList(NOTES_COLLECTION, scope);
+        courseNotes = raw.map(item => ({
+            id: item.id,
+            ...item.data
+        }));
+    } catch(e) {
+        courseNotes = [];
+    }
+}
+
+function switchModalTab(tab){
+    const tabBtnSubject = document.getElementById("tabBtnSubject");
+    const tabBtnNotes = document.getElementById("tabBtnNotes");
+    const addSubjectForm = document.getElementById("addSubjectForm");
+    const addNotesForm = document.getElementById("addNotesForm");
+
+    if(tab === "subject"){
+        tabBtnSubject.classList.add("active");
+        tabBtnNotes.classList.remove("active");
+        addSubjectForm.style.display = "grid";
+        addNotesForm.style.display = "none";
+    } else {
+        tabBtnNotes.classList.add("active");
+        tabBtnSubject.classList.remove("active");
+        addNotesForm.style.display = "grid";
+        addSubjectForm.style.display = "none";
+        populateSubjectDropdown();
+    }
+}
+
+function populateSubjectDropdown(){
+    const select = document.getElementById("noteSubject");
+    select.innerHTML = `<option value="">Select a Subject</option>`;
+    subjects.forEach(s => {
+        select.insertAdjacentHTML("beforeend", `<option value="${escapeHTMLValue(s.name)}">${escapeHTMLValue(s.name)}</option>`);
+    });
+    select.insertAdjacentHTML("beforeend", `<option value="General / Reference">General / Reference Notes</option>`);
+}
+
+function fileToBase64(file){
+    return new Promise((res, rej) => {
+        const r = new FileReader();
+        r.onload = () => res(r.result);
+        r.onerror = rej;
+        r.readAsDataURL(file);
+    });
+}
+
+function openNoteResource(link, base64File){
+    if(link && (link.startsWith("http://") || link.startsWith("https://"))){
+        window.open(link, "_blank", "noopener,noreferrer");
+        return;
+    }
+    if(base64File){
+        const win = window.open();
+        if(win){
+            win.document.write(`<iframe src="${escapeHTMLValue(base64File)}" frameborder="0" style="border:0;top:0;left:0;bottom:0;right:0;width:100%;height:100%;" allowfullscreen></iframe>`);
+        }
+        return;
+    }
+    alert("No document URL or file found for this note.");
+}
+
+async function delNote(id, event){
+    if(event) event.stopPropagation();
+    if(!confirm("Delete this notes resource?")) return;
+    try {
+        await apiDelete(NOTES_COLLECTION, id);
+        await loadNotes();
+        renderNotes();
+    } catch(err){
+        alert(err.message || "Could not delete notes.");
+    }
+}
+
 const addSubjectOpen = document.getElementById("addSubjectOpen");
 const addSubjectDialog = document.getElementById("addSubjectDialog");
 const addSubjectStatus = document.getElementById("addSubjectStatus");
 const addSubjectSubmit = document.getElementById("addSubjectSubmit");
-document.getElementById("subjectSemesterLabel").textContent = sem;
+
+const addNotesStatus = document.getElementById("addNotesStatus");
+const addNotesSubmit = document.getElementById("addNotesSubmit");
 
 if (addSubjectOpen) {
     addSubjectOpen.addEventListener("click", () => {
-        if (!canEdit("departments")) return;
+        if (!canEdit("departments") && !canEdit("course_notes")) return;
         document.getElementById("addSubjectForm").reset();
+        document.getElementById("addNotesForm").reset();
         addSubjectStatus.textContent = "";
+        addNotesStatus.textContent = "";
+        switchModalTab("subject");
         addSubjectDialog.showModal();
     });
 
     document.getElementById("addSubjectCancel").addEventListener("click", () => addSubjectDialog.close());
+    document.getElementById("addNotesCancel").addEventListener("click", () => addSubjectDialog.close());
 
+    // FORM 1: SUBJECT SUBMISSION
     document.getElementById("addSubjectForm").addEventListener("submit", async event => {
         event.preventDefault();
         if (!canEdit("departments")) return;
@@ -152,7 +385,7 @@ if (addSubjectOpen) {
                 batch: getEffectiveBatch()
             });
             await loadSubjects();
-            render();
+            renderSubjects();
             addSubjectDialog.close();
         } catch (error) {
             addSubjectStatus.textContent = error.message || "Could not add the subject.";
@@ -160,16 +393,67 @@ if (addSubjectOpen) {
             addSubjectSubmit.disabled = false;
         }
     });
+
+    // FORM 2: NOTES / DRIVE LINK SUBMISSION
+    document.getElementById("addNotesForm").addEventListener("submit", async event => {
+        event.preventDefault();
+        if (!canEdit("course_notes") && !canEdit("departments")) return;
+
+        const title = document.getElementById("noteTitle").value.trim();
+        const subjectName = document.getElementById("noteSubject").value;
+        const driveLink = document.getElementById("noteDriveLink").value.trim();
+        const fileInput = document.getElementById("noteFile");
+        const desc = document.getElementById("noteDescription").value.trim();
+
+        if (!title || !subjectName) {
+            addNotesStatus.textContent = "Title and Subject are required.";
+            return;
+        }
+
+        if (!driveLink && (!fileInput.files || fileInput.files.length === 0)) {
+            addNotesStatus.textContent = "Please provide a Google Drive Link or choose a document file to upload.";
+            return;
+        }
+
+        addNotesSubmit.disabled = true;
+        addNotesStatus.textContent = "Publishing notes resource...";
+
+        try {
+            let fileData = "";
+            if (fileInput.files.length > 0) {
+                fileData = await fileToBase64(fileInput.files[0]);
+            }
+
+            await apiCreate(NOTES_COLLECTION, {
+                title,
+                subject: subjectName,
+                driveLink,
+                file: fileData,
+                desc,
+                branch,
+                sem: String(sem),
+                scope,
+                batch: getEffectiveBatch(),
+                date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+            });
+
+            await loadNotes();
+            renderNotes();
+            addSubjectDialog.close();
+        } catch (error) {
+            addNotesStatus.textContent = error.message || "Could not publish the notes.";
+        } finally {
+            addNotesSubmit.disabled = false;
+        }
+    });
 }
 
-
-
-function render(){
+function renderSubjects(){
     const grid = document.getElementById("sGrid");
     grid.innerHTML = "";
 
     if(subjects.length === 0){
-        grid.innerHTML = `<div class="empty">No subjects listed yet. Click + to add.</div>`;
+        grid.innerHTML = `<div class="empty" style="grid-column:1/-1;">No subjects listed yet. Click + to add a subject.</div>`;
         return;
     }
 
@@ -178,17 +462,63 @@ function render(){
             <div class="card subj-card">
                 <a href="subject.html?sem=${sem}&s=${encodeURIComponent(s.name)}">
                     <span class="tag">Semester ${sem}</span>
-                    <h4>${escapeHTMLValue(s.name)}</h4>
-                    <small>${escapeHTMLValue(s.desc || "Click to view modules & notes")}</small>
+                    <h4 style="color:#0b3d91;margin:6px 0;">${escapeHTMLValue(s.name)}</h4>
+                    <small>${escapeHTMLValue(s.desc || "Click to view modules & files")}</small>
                 </a>
             </div>
         `);
     });
 }
 
+function renderNotes(){
+    const box = document.getElementById("notesGrid");
+    box.innerHTML = "";
 
+    if(courseNotes.length === 0){
+        box.innerHTML = `<div class="empty" style="grid-column:1/-1;">
+            <p>No direct notes or Google Drive document links added for Semester ${sem} yet.</p>
+            ${(canEdit("departments") || canEdit("course_notes")) ? `<small>Click the gold <b>+</b> button and select <b>Upload Notes / Drive Link</b> to attach materials.</small>` : ""}
+        </div>`;
+        return;
+    }
 
-loadSubjects().then(render).catch(err => alert(err.message));
+    const editable = canEdit("departments") || canEdit("course_notes");
+    const items = courseNotes.slice().reverse();
+
+    items.forEach(note => {
+        const link = note.driveLink || "";
+        const file = safeDataURL(note.file || "");
+        const isDrive = Boolean(link);
+
+        box.insertAdjacentHTML("beforeend", `
+            <div class="note-resource-card" onclick="openNoteResource('${escapeHTMLValue(link)}', '${escapeHTMLValue(file)}')">
+                <div>
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+                        <span class="tag" style="background:${isDrive ? '#e8f5e9' : '#e3f2fd'};color:${isDrive ? '#2e7d32' : '#1565c0'};font-weight:600;">
+                            ${isDrive ? '📁 Google Drive Document' : '📄 Uploaded PDF / Notes'}
+                        </span>
+                        ${editable ? `<button class="btn-card-del" onclick="delNote('${escapeHTMLValue(note.id)}', event)">Delete</button>` : ""}
+                    </div>
+                    <h4 style="color:#0b3d91;font-size:18px;margin:4px 0 6px;">${escapeHTMLValue(note.title)}</h4>
+                    <span style="display:inline-block;background:#f0f3f8;color:#333;font-size:12px;font-weight:600;padding:2px 8px;border-radius:4px;margin-bottom:8px;">
+                        ${escapeHTMLValue(note.subject || 'General Notes')}
+                    </span>
+                    ${note.desc ? `<p style="color:#555;font-size:13px;margin:6px 0 10px;white-space:pre-wrap;">${escapeHTMLValue(note.desc)}</p>` : ''}
+                </div>
+                <div style="margin-top:12px;display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#0b3d91;">
+                    <span>🔗 Click to open document</span>
+                    <span style="font-size:16px;">↗</span>
+                </div>
+            </div>
+        `);
+    });
+}
+
+Promise.all([loadSubjects(), loadNotes()]).then(() => {
+    renderSubjects();
+    renderNotes();
+}).catch(err => alert(err.message));
+
 renderFooter();
 </script>
 

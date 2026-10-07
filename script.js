@@ -110,6 +110,7 @@ var ROLE_LABELS = {
 
 var EDIT_PERMISSIONS = {
     departments: ["course_coordinator"],
+    course_notes: ["course_coordinator"],
     announcements: ["director"],
     hrd: ["hrd_coordinator"],
     hostel: ["hostel_coordinator"],

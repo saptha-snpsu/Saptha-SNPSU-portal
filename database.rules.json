@@ -1,0 +1,20 @@
+{
+  "rules": {
+    ".read": "auth != null",
+    ".write": "auth != null",
+    "users": {
+      ".indexOn": ["srn", "role", "batch"]
+    },
+    "subjects": {
+      ".indexOn": ["scope", "batch", "sem"]
+    },
+    "modules": {
+      ".indexOn": ["scope", "subjectId", "batch", "sem"]
+    },
+    "content": {
+      "$collection": {
+        ".indexOn": ["scope", "batch"]
+      }
+    }
+  }
+}
