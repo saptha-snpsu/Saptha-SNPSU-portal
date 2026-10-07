@@ -110,7 +110,7 @@ let activityItems = [];
 
 async function loadItems(){
   const raw = await apiList(COLLECTION);
-  activityItems = raw.map(item => ({ id: item.id, ...item.data }));
+  activityItems = raw.map(item => ({ id: item.id, ...(item.data || item) }));
 }
 
 function fileToBase64(file){

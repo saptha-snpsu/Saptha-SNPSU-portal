@@ -2,6 +2,7 @@ import json
 import io
 import base64
 import hashlib
+import hmac
 import logging
 import mimetypes
 import os
@@ -438,17 +439,61 @@ def write_db(data):
             pass
 
 
+SESSION_SECRET = os.getenv(
+    "SAPTHA_SESSION_SECRET",
+    "saptha_secret_portal_key_snpsu_2026_default",
+)
+
+
+def create_session_token(session_dict):
+    payload = json.dumps(session_dict, separators=(",", ":"), sort_keys=True).encode("utf-8")
+    sig = hmac.new(SESSION_SECRET.encode("utf-8"), payload, hashlib.sha256).digest()
+    p_b64 = base64.urlsafe_b64encode(payload).decode("ascii").rstrip("=")
+    s_b64 = base64.urlsafe_b64encode(sig).decode("ascii").rstrip("=")
+    return f"stk.{p_b64}.{s_b64}"
+
+
+def decode_session_token(token_str):
+    if not isinstance(token_str, str) or not token_str.startswith("stk."):
+        return None
+    parts = token_str.split(".")
+    if len(parts) != 3:
+        return None
+    _, p_b64, s_b64 = parts
+    try:
+        p_pad = p_b64 + "=" * (-len(p_b64) % 4)
+        s_pad = s_b64 + "=" * (-len(s_b64) % 4)
+        payload = base64.urlsafe_b64decode(p_pad.encode("ascii"))
+        expected_sig = base64.urlsafe_b64decode(s_pad.encode("ascii"))
+        actual_sig = hmac.new(SESSION_SECRET.encode("utf-8"), payload, hashlib.sha256).digest()
+        if not hmac.compare_digest(actual_sig, expected_sig):
+            return None
+        parsed = json.loads(payload.decode("utf-8"))
+        return parsed if isinstance(parsed, dict) else None
+    except Exception:
+        return None
+
+
 def invalidate_user_sessions(srn):
     data = read_db()
     stale_tokens = [
         token
-        for token, session in data["sessions"].items()
+        for token, session in data.get("sessions", {}).items()
         if session.get("srn") == srn
     ]
     if stale_tokens:
         for token in stale_tokens:
-            data["sessions"].pop(token, None)
+            data.get("sessions", {}).pop(token, None)
         write_db(data)
+    try:
+        remote_sessions = firebase_read("sessions") or {}
+        for key, record in firebase_record_items(remote_sessions):
+            if isinstance(record, dict) and record.get("srn") == srn:
+                firebase_delete(f"sessions/{quote(str(key), safe='')}")
+    except Exception:
+        pass
+
+
 
 
 def is_public_static_path(request_path):
@@ -605,6 +650,30 @@ def firebase_write(path, value):
         write_db(data)
 
 
+def firebase_delete(path):
+    try:
+        get_firebase_admin_app()
+        reference = firebase_db.reference(path)
+        reference.delete()
+    except Exception as error:
+        if ENVIRONMENT == "production":
+            raise
+        data = read_db()
+        parts = [unquote(p) for p in path.strip("/").split("/") if p]
+        if not parts:
+            return
+        current = data
+        for part in parts[:-1]:
+            if isinstance(current, dict):
+                current = current.get(part)
+            else:
+                return
+        if isinstance(current, dict):
+            current.pop(parts[-1], None)
+        write_db(data)
+
+
+
 def trusted_urlopen(request, timeout):
     try:
         import certifi
@@ -708,14 +777,6 @@ def create_hierarchy_record(kind, payload):
         raise ValueError("Invalid hierarchy record.")
     if kind not in ("subject", "module"):
         raise ValueError("Unknown hierarchy record type.")
-    if not FIREBASE_SERVICE_ACCOUNT_FILE.exists():
-        raise RuntimeError(
-            f"Firebase service account file not found: "
-            f"{FIREBASE_SERVICE_ACCOUNT_FILE}"
-        )
-    root_folder_id = os.getenv("GOOGLE_DRIVE_ROOT_FOLDER_ID", "").strip()
-    if not root_folder_id:
-        raise RuntimeError("Google Drive is not configured on the server.")
 
     batch = str(payload.get("batch") or "2024").strip()
     branch = str(payload.get("branch") or "CSE").strip().upper()
@@ -728,11 +789,20 @@ def create_hierarchy_record(kind, payload):
     if not 1 <= semester <= 8:
         raise ValueError("Select a valid semester.")
 
-    service = get_drive_service()
-    if ENVIRONMENT == "production":
-        verify_drive_resource_is_private(service, root_folder_id)
-    year_name = year_folder_name(semester)
-    year_id = ensure_drive_folder(service, year_name, root_folder_id)
+    root_folder_id = os.getenv("GOOGLE_DRIVE_ROOT_FOLDER_ID", "").strip()
+    service = None
+    year_id = ""
+    if root_folder_id:
+        try:
+            service = get_drive_service()
+            if ENVIRONMENT == "production":
+                verify_drive_resource_is_private(service, root_folder_id)
+            year_name = year_folder_name(semester)
+            year_id = ensure_drive_folder(service, year_name, root_folder_id)
+        except Exception as drive_err:
+            logging.warning("Google Drive integration unavailable: %s", drive_err)
+            service = None
+
     normalized_batch = batch.lower()
 
     if kind == "subject":
@@ -753,13 +823,18 @@ def create_hierarchy_record(kind, payload):
             str(existing.get("id") or key) if existing is not None else uuid.uuid4().hex
         )
         details = record_data(existing)
-        subject_folder_id = drive_folder_id_under_parent(
-            service, details.get("driveFolderId"), year_id
-        )
-        if not subject_folder_id:
-            subject_folder_id = ensure_drive_folder(
-                service, str(details.get("name") or name), year_id
-            )
+        subject_folder_id = details.get("driveFolderId") or ""
+        if service and year_id:
+            try:
+                subject_folder_id = drive_folder_id_under_parent(
+                    service, details.get("driveFolderId"), year_id
+                )
+                if not subject_folder_id:
+                    subject_folder_id = ensure_drive_folder(
+                        service, str(details.get("name") or name), year_id
+                    )
+            except Exception as drive_folder_err:
+                logging.warning("Could not sync subject folder with Drive: %s", drive_folder_err)
         saved_fields = {
             "name": str(details.get("name") or name),
             "desc": str(details.get("desc") or str(payload.get("desc") or "").strip()),
@@ -767,7 +842,7 @@ def create_hierarchy_record(kind, payload):
             "sem": str(semester),
             "scope": scope,
             "batch": str(details.get("batch") or batch),
-            "driveYearFolderId": year_id,
+            "driveYearFolderId": year_id or details.get("driveYearFolderId", ""),
             "driveFolderId": subject_folder_id,
         }
         if existing is None:
@@ -812,11 +887,17 @@ def create_hierarchy_record(kind, payload):
         if str(subject.get("branch") or "CSE").upper() != branch:
             raise ValueError("The selected subject does not belong to this branch.")
 
-        subject_folder_id = drive_folder_id_under_parent(
-            service, subject.get("driveFolderId"), year_id
-        )
-        if not subject_folder_id:
-            subject_folder_id = ensure_drive_folder(service, subject_name, year_id)
+        subject_folder_id = subject.get("driveFolderId") or ""
+        if service and year_id:
+            try:
+                subject_folder_id = drive_folder_id_under_parent(
+                    service, subject.get("driveFolderId"), year_id
+                )
+                if not subject_folder_id:
+                    subject_folder_id = ensure_drive_folder(service, subject_name, year_id)
+            except Exception as drive_sub_err:
+                logging.warning("Could not sync subject folder in Drive: %s", drive_sub_err)
+
         scope = f"{branch}_{semester}_{subject_name}"
         module_key, existing = find_firebase_record(
             "modules",
@@ -837,13 +918,19 @@ def create_hierarchy_record(kind, payload):
             if existing is not None else uuid.uuid4().hex
         )
         module_details = record_data(existing)
-        module_folder_id = drive_folder_id_under_parent(
-            service, module_details.get("driveFolderId"), subject_folder_id
-        )
-        if not module_folder_id:
-            module_folder_id = ensure_drive_folder(
-                service, str(module_details.get("title") or title), subject_folder_id
-            )
+        module_folder_id = module_details.get("driveFolderId") or ""
+        if service and subject_folder_id:
+            try:
+                module_folder_id = drive_folder_id_under_parent(
+                    service, module_details.get("driveFolderId"), subject_folder_id
+                )
+                if not module_folder_id:
+                    module_folder_id = ensure_drive_folder(
+                        service, str(module_details.get("title") or title), subject_folder_id
+                    )
+            except Exception as drive_mod_err:
+                logging.warning("Could not sync module folder in Drive: %s", drive_mod_err)
+
         saved_fields = {
             "title": str(module_details.get("title") or title),
             "desc": str(module_details.get("desc") or description),
@@ -1237,37 +1324,58 @@ class Handler(SimpleHTTPRequestHandler):
             return None
 
         token = auth.split(" ", 1)[1].strip()
-        db = read_db()
-        session = db["sessions"].get(token)
-        if not session:
+        if not token:
             return None
+
+        db = read_db()
+        session = db.get("sessions", {}).get(token)
+        if not isinstance(session, dict):
+            session = decode_session_token(token)
+
+        if not isinstance(session, dict):
+            return None
+
         session_srn = str(session.get("srn") or "").strip().upper()
-        account = firebase_read(f"users/{quote(session_srn, safe='')}")
+        account = None
+        try:
+            account = firebase_read(f"users/{quote(session_srn, safe='')}")
+        except Exception:
+            account = None
+
+        if not isinstance(account, dict):
+            account = db.get("users", {}).get(session_srn)
+
         account_srn = (
             str(account.get("srn") or "").strip().upper()
             if isinstance(account, dict)
             else ""
         )
+        if not account_srn:
+            account_srn = session_srn
+
         account_branch = parse_branch(account_srn)
+        account_role = (account.get("role") if isinstance(account, dict) else None) or session.get("role")
+        account_batch = (account.get("batch") if isinstance(account, dict) else None) or session.get("batch") or parse_batch(account_srn)
+
         if (
             not account_srn
             or account_srn != session_srn
             or not account_branch
-            or not account.get("role")
-            or account.get("role") != session.get("role")
-            or not account.get("batch")
+            or not account_role
+            or account_role != session.get("role")
+            or not account_batch
         ):
-            db["sessions"].pop(token, None)
+            db.get("sessions", {}).pop(token, None)
             write_db(db)
             return None
 
         return {
             "token": token,
             "srn": account_srn,
-            "role": account["role"],
-            "batch": str(account["batch"]),
+            "role": account_role,
+            "batch": str(account_batch),
             "branch": account_branch["code"],
-            "name": account.get("name", account_srn),
+            "name": account.get("name", account_srn) if isinstance(account, dict) else session.get("name", account_srn),
         }
 
     def require_user(self):
@@ -1628,15 +1736,15 @@ class Handler(SimpleHTTPRequestHandler):
 
             firebase_write(f"users/{quote(srn, safe='')}", user)
 
-            token = str(uuid.uuid4())
             session = {
-                "token": token,
                 "srn": srn,
                 "role": "student",
                 "branch": branch["code"],
                 "batch": batch,
                 "name": user.get("name", srn),
             }
+            token = create_session_token(session)
+            session["token"] = token
 
             data["sessions"][token] = session
             write_db(data)
@@ -1677,16 +1785,15 @@ class Handler(SimpleHTTPRequestHandler):
         user["batch"] = batch
         firebase_write(f"users/{quote(account_srn, safe='')}", user)
 
-        token = str(uuid.uuid4())
-
         session = {
-            "token": token,
             "srn": account_srn,
             "role": role,
             "branch": branch["code"],
             "batch": batch,
             "name": user.get("name", account_srn),
         }
+        token = create_session_token(session)
+        session["token"] = token
 
         data["sessions"][token] = session
         write_db(data)

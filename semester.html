@@ -256,8 +256,8 @@ let courseNotes = [];
 async function loadSubjects(){
     const raw = await apiList(SUBJECT_COLLECTION, scope);
     subjects = raw.map(item => ({
-        id: item.id,
-        ...item.data
+        ...(item.data || item),
+        id: item.id
     }));
 }
 
@@ -265,8 +265,8 @@ async function loadNotes(){
     try {
         const raw = await apiList(NOTES_COLLECTION, scope);
         courseNotes = raw.map(item => ({
-            id: item.id,
-            ...item.data
+            ...(item.data || item),
+            id: item.id
         }));
     } catch(e) {
         courseNotes = [];

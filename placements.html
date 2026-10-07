@@ -75,7 +75,7 @@ let placements = [];
 
 async function loadData(){
   const raw = await apiList(COLLECTION);
-  placements = raw.map(item => ({ id: item.id, ...item.data }));
+  placements = raw.map(item => ({ id: item.id, ...(item.data || item) }));
 }
 
 async function delPlacement(id){

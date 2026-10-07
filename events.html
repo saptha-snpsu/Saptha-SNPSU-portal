@@ -70,7 +70,7 @@ let events = [];
 
 async function loadData(){
   const raw = await apiList(COLLECTION);
-  events = raw.map(item => ({ id: item.id, ...item.data }));
+  events = raw.map(item => ({ id: item.id, ...(item.data || item) }));
 }
 
 async function delEvent(id){

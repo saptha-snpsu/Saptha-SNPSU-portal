@@ -68,7 +68,7 @@ let sportsItems = [];
 
 async function loadData(){
   const raw = await apiList(COLLECTION);
-  sportsItems = raw.map(item => ({ id: item.id, ...item.data }));
+  sportsItems = raw.map(item => ({ id: item.id, ...(item.data || item) }));
 }
 
 async function delSport(id){

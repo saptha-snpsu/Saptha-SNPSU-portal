@@ -98,10 +98,10 @@
     },
     "24SUUBECS0952": {
       "srn": "24SUUBECS0952",
+      "password_hash": "scrypt$16384$8$1$FHYartol5HoDH4TNkdm7xw==$GMLp7FWLoL9ld+6Tvb4CcYMDad57KUVFPxg9ZnPXC3r+Bbhqo+D/x60ujhvERyawygTC8gHN5XzHSKJ3yCd0Gg==",
       "role": "admin",
       "name": "Super Admin",
-      "created_at": "2026-06-02T10:32:58.777017+00:00",
-      "password_hash": "scrypt$16384$8$1$agZCqElASrIk7Wqb18ng9g==$F4hjraMoBLrFGwwQAXkZyTmK+4e+Z7HSrobKxbfkS0O+hPHjELmqU2Wn+MT7isxJMiUO7oTjSzkZNicYy8YhcQ=="
+      "created_at": "2026-10-07T19:40:00.000000+00:00"
     }
   },
   "sessions": {
